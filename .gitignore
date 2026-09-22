@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local run artifacts / logs
+*.log
+npm-debug.log*
+
+# Anything that might accidentally hold real credentials or a real Web App URL
+# saved locally during manual testing — never commit these.
+.env
+.env.local
+*.secrets.json
+
+# This project's Dashboard stores its Web App URL in the browser's localStorage
+# (entered once via the settings screen), never in a file — so there is normally
+# nothing config-related to ignore here. This entry exists only as a safety net
+# in case a local test run or a manual experiment writes one of these by hand.
+config.local.json

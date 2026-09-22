@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARRIVE AUDIT CONTROL TOWER</title>
+<style>
+  :root {
+    --navy: #1B2A4A; --orange: #FF6B35; --green: #1E8E3E; --red: #D93025;
+    --yellow: #F2A600; --bg: #F4F6F9; --card: #FFFFFF; --gray: #5F6368;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Tahoma, Arial, sans-serif; background: var(--bg); margin: 0; color: #222; }
+  header { background: var(--navy); color: #fff; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  header h1 { font-size: 19px; margin: 0; }
+  header .user-box { font-size: 12px; display: flex; align-items: center; gap: 10px; opacity: .95; }
+  nav { display: flex; gap: 6px; padding: 8px 24px; background: #fff; border-bottom: 1px solid #e2e5ea; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+  nav button { background: none; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--navy); font-weight: 600; }
+  nav button.active, nav button:hover { background: var(--navy); color: #fff; }
+  main { padding: 18px 24px; max-width: 1280px; margin: 0 auto; }
+  .card { background: var(--card); border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr)); gap: 12px; }
+  .kpi { border-radius: 12px; padding: 14px 16px; color: #fff; }
+  .kpi h3 { margin: 0 0 6px; font-size: 12.5px; font-weight: 600; opacity: .92; }
+  .kpi .sub { font-size: 12px; opacity: .9; margin-top: 3px; }
+  .summary-tile { text-align: center; padding: 14px 8px; border-radius: 10px; background: #F0F2F6; }
+  .summary-tile .num { font-size: 24px; font-weight: 800; color: var(--navy); }
+  .summary-tile .lbl { font-size: 12px; color: var(--gray); margin-top: 2px; }
+  .home-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px,1fr)); gap: 14px; margin-top: 14px; }
+  .home-actions .btn-lg { background: var(--card); border: 2px solid var(--navy); border-radius: 14px; padding: 22px 8px; text-align: center; cursor: pointer; font-size: 15px; font-weight: 700; color: var(--navy); }
+  .home-actions .btn-lg:hover { background: var(--navy); color: #fff; }
+  .type-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap: 10px; }
+  .type-card { border: 2px solid #dde2ea; border-radius: 12px; padding: 16px 8px; text-align: center; cursor: pointer; font-weight: 600; color: var(--navy); font-size: 13.5px; }
+  .type-card:hover, .type-card.sel { border-color: var(--orange); background: #FFF6F0; }
+  label { display: block; font-size: 12.5px; font-weight: 600; margin: 8px 0 4px; color: var(--navy); }
+  label .req { color: var(--red); }
+  input, select, textarea { width: 100%; padding: 7px 9px; border: 1px solid #ccd3de; border-radius: 8px; font-family: inherit; font-size: 13.5px; }
+  .field-err { border-color: var(--red) !important; background: #FDECEA; }
+  .btn { background: var(--orange); color: #fff; border: none; padding: 9px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13.5px; }
+  .btn:disabled { opacity: .55; cursor: not-allowed; }
+  .btn.secondary { background: #eceff3; color: var(--navy); }
+  .btn.small { padding: 5px 10px; font-size: 11.5px; }
+  .msg { padding: 11px 13px; border-radius: 8px; margin: 10px 0; font-weight: 600; font-size: 13.5px; }
+  .msg.ok { background: #DFF5E3; color: #14602A; }
+  .msg.err { background: #FBE0DE; color: #8C1D18; }
+  .msg.info { background: #E8EEF9; color: var(--navy); }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { padding: 6px 7px; border-bottom: 1px solid #eee; text-align: right; }
+  th { background: #F0F2F6; color: var(--navy); position: sticky; top: 0; }
+  .table-wrap { overflow-x: auto; max-height: 480px; overflow-y: auto; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+  .filters > div { min-width: 140px; flex: 1; }
+  .filters-note { font-size: 11px; color: var(--gray); margin-top: 6px; }
+  .status-line { font-size: 11.5px; color: var(--gray); margin-top: 6px; }
+  .config-box { max-width: 480px; margin: 60px auto; }
+  .hidden { display: none !important; }
+  .footer-note { font-size: 11px; color: var(--gray); text-align: center; padding: 16px; }
+  .pager { display: flex; gap: 6px; align-items: center; margin-top: 8px; font-size: 12.5px; }
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 50; }
+  .modal { background: #fff; border-radius: 12px; padding: 20px; max-width: 560px; width: 92%; max-height: 85vh; overflow-y: auto; }
+  .security-note { background: #FFF9EC; border: 1px solid #F2A600; border-radius: 10px; padding: 12px 14px; font-size: 12.5px; color: #7a5b00; }
+</style>
+</head>
+<body>
+
+<div id="configScreen" class="config-box card hidden">
+  <h2 style="color:var(--navy)">⚙️ إعداد الاتصال بالخادم</h2>
+  <p style="font-size:13px;color:var(--gray)">أدخل رابط Web App الخاص بـ Google Apps Script (تحصل عليه بعد نشر Code.gs من شيت البيانات) واسمك لتسجيله مع كل عملية حفظ أو تعديل.</p>
+  <label>رابط الـ API <span class="req">*</span></label>
+  <input id="cfgUrl" placeholder="https://script.google.com/macros/s/XXXX/exec">
+  <label>اسمك (سيُسجَّل كمُدخل السجل، وليس نظام صلاحيات حقيقيًا) <span class="req">*</span></label>
+  <input id="cfgUser" placeholder="مثال: محمد سعيد">
+  <button class="btn" style="margin-top:14px" onclick="saveConfig()">حفظ والدخول</button>
+  <p id="cfgErr" class="msg err hidden"></p>
+</div>
+
+<div id="appShell" class="hidden">
+<header>
+  <h1>🗼 ARRIVE AUDIT CONTROL TOWER</h1>
+  <div class="user-box">
+    <span id="userLabel"></span>
+    <span id="lastUpdateLabel"></span>
+    <button class="btn small secondary" onclick="showConfig()">تغيير الاتصال</button>
+  </div>
+</header>
+<nav>
+  <button data-tab="home" onclick="go('home')">🏠 الرئيسية</button>
+  <button data-tab="register" onclick="go('register')">➕ تسجيل رقابة</button>
+  <button data-tab="search" onclick="go('search')">🔎 البحث في السجلات</button>
+  <button data-tab="dashboard" onclick="go('dashboard')">📊 Dashboard</button>
+  <button data-tab="reports" onclick="go('reports')">📑 التقارير</button>
+  <button data-tab="settings" onclick="go('settings')">⚙️ الإعدادات</button>
+</nav>
+<main>
+
+  <div id="tab-home" class="tab">
+    <div class="card">
+      <h2 style="color:var(--navy);margin-top:0">مرحبًا، <span id="homeUser"></span> 👋</h2>
+      <p style="color:var(--gray);font-size:13.5px">هذه الواجهة هي مكان العمل الفعلي — لا حاجة لفتح Google Sheets. كل ما تسجله هنا يُحفظ تلقائيًا في قاعدة البيانات الخلفية وتتحدث المؤشرات فورًا.</p>
+      <div class="grid" id="homeSummary" style="margin-top:10px"></div>
+      <div class="status-line" id="homeStatus"></div>
+    </div>
+    <div class="home-actions">
+      <div class="btn-lg" onclick="go('register')">➕<br>تسجيل رقابة جديدة</div>
+      <div class="btn-lg" onclick="go('search')">🔎<br>البحث في السجلات</div>
+      <div class="btn-lg" onclick="go('dashboard')">📊<br>Dashboard</div>
+      <div class="btn-lg" onclick="go('reports')">📑<br>التقارير</div>
+    </div>
+  </div>
+
+  <div id="tab-register" class="tab hidden">
+    <div class="card">
+      <h2 style="color:var(--navy);margin-top:0">اختر نوع الرقابة</h2>
+      <div class="type-cards" id="typeCards"></div>
+    </div>
+    <div class="card hidden" id="formCard">
+      <h3 id="formTitle" style="color:var(--navy)"></h3>
+      <div id="formFields"></div>
+      <div style="margin-top:14px">
+        <button class="btn" id="saveBtn" onclick="submitRecord()">✅ حفظ السجل</button>
+        <button class="btn secondary" onclick="clearForm()">مسح النموذج</button>
+      </div>
+      <div id="formMsg"></div>
+    </div>
+  </div>
+
+  <div id="tab-search" class="tab hidden">
+    <div class="card">
+      <h2 style="color:var(--navy);margin-top:0">البحث في السجلات</h2>
+      <div class="filters">
+        <div><label>بحث حر (رقم سجل/بوليصة/تحويل/نص)</label><input id="sQ"></div>
+        <div><label>نوع الرقابة</label><select id="sType" onchange="onSearchTypeChange()"><option value="">الكل</option></select></div>
+        <div><label>الفرع</label><select id="sBranch"><option value="">الكل</option></select></div>
+        <div><label>المدقق/المستخدم</label><select id="sAuditor"><option value="">الكل</option></select></div>
+      </div>
+      <div class="filters" style="margin-top:8px">
+        <div><label>المسؤول عن المتابعة</label><select id="sOwner"><option value="">الكل</option></select></div>
+        <div><label>الحالة</label><select id="sStatus"><option value="">الكل</option></select></div>
+        <div><label>الأولوية</label><select id="sPriority"><option value="">الكل</option></select></div>
+        <div><label>من تاريخ</label><input type="date" id="sDateFrom"></div>
+        <div><label>إلى تاريخ</label><input type="date" id="sDateTo"></div>
+        <div><button class="btn" onclick="runSearch(1)">بحث</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div id="searchResultsInfo" class="status-line"></div>
+      <div class="table-wrap"><table id="searchTable"></table></div>
+      <div class="pager" id="searchPager"></div>
+    </div>
+  </div>
+
+  <div id="tab-dashboard" class="tab hidden">
+    <div class="card">
+      <div class="filters">
+        <div><label>من تاريخ</label><input type="date" id="kDateFrom"></div>
+        <div><label>إلى تاريخ</label><input type="date" id="kDateTo"></div>
+        <div><label>الفرع</label><select id="kBranch"><option value="">الكل</option></select></div>
+        <div><label>نوع الرقابة</label><select id="kType"><option value="">الكل</option></select></div>
+        <div><label>المدقق/المستخدم</label><select id="kAuditor"><option value="">الكل</option></select></div>
+        <div><label>الحالة</label><select id="kStatus"><option value="">الكل</option></select></div>
+        <div><label>المسؤول</label><select id="kOwner"><option value="">الكل</option></select></div>
+        <div><button class="btn" onclick="loadKpis()">🔄 تطبيق وتحديث</button></div>
+      </div>
+      <div class="status-line" id="kpiFiltersApplied"></div>
+      <div class="status-line" id="kpiUpdated"></div>
+    </div>
+    <div id="kpiGrid" class="grid"></div>
+  </div>
+
+  <div id="tab-reports" class="tab hidden">
+    <div class="card">
+      <div class="filters">
+        <div><label>من تاريخ</label><input type="date" id="rDateFrom"></div>
+        <div><label>إلى تاريخ</label><input type="date" id="rDateTo"></div>
+        <div><label>الفرع</label><select id="rBranch"><option value="">الكل</option></select></div>
+        <div><label>نوع الرقابة</label><select id="rType"><option value="">الكل</option></select></div>
+        <div><label><input type="checkbox" id="rCompare" style="width:auto;display:inline-block;vertical-align:middle"> قارن بالفترة السابقة المكافئة</label></div>
+        <div><button class="btn" onclick="loadReports()">📊 توليد التقرير</button></div>
+      </div>
+      <p class="filters-note">"الفترة السابقة المكافئة" = نفس عدد الأيام قبل تاريخ البداية مباشرة. يتطلب تحديد "من" و"إلى" لتفعيل المقارنة.</p>
+    </div>
+    <div id="reportsBody"></div>
+  </div>
+
+  <div id="tab-settings" class="tab hidden">
+    <div class="card">
+      <h2 style="color:var(--navy);margin-top:0">القوائم والأهداف (للعرض فقط من هنا)</h2>
+      <p class="status-line">لتعديل القوائم أو الأهداف افتح شيت "الإعدادات" في Google Sheets مباشرة — هذه الشاشة للعرض فقط لضمان اتساق البيانات.</p>
+      <div id="settingsView"></div>
+    </div>
+    <div class="card">
+      <h2 style="color:var(--navy);margin-top:0">🔒 حدود الأمان الحالية — بصراحة</h2>
+      <div class="security-note">
+        اسم المستخدم المُدخَل هنا نص حر يُسجَّل مع كل عملية للتتبّع فقط — وهذا <b>ليس</b> نظام صلاحيات أو تسجيل دخول حقيقيًا؛ لا يمنع أي شخص لديه رابط الـ Dashboard من الدخول أو من كتابة أي اسم.
+        لا تُشارك رابط Google Sheet نفسه مع المستخدمين العاديين — شارك رابط هذا الـ Dashboard فقط، وأبقِ صلاحية تعديل الـ Sheet مقصورة على مدير النظام.
+        إذا احتجت دخولًا حقيقيًا بصلاحيات (من يرى ماذا، من يعدّل ماذا) فهذا يتطلب Google Workspace مع التحقق من هوية المستخدم داخل Apps Script (Session.getActiveUser)، وهو تغيير إضافي غير منفَّذ في هذه النسخة.
+      </div>
+    </div>
+  </div>
+
+</main>
+<div class="footer-note">ARRIVE Audit Control Tower — Web Dashboard · قاعدة البيانات: Google Sheets عبر Apps Script</div>
+</div>
+
+<div id="editModalBg" class="modal-bg hidden">
+  <div class="modal">
+    <h3 style="color:var(--navy);margin-top:0">✏️ تعديل السجل <span id="editRecordId"></span></h3>
+    <div id="editFields"></div>
+    <div style="margin-top:12px">
+      <button class="btn" id="editSaveBtn" onclick="confirmEdit()">تأكيد حفظ التعديل</button>
+      <button class="btn secondary" onclick="closeEditModal()">إلغاء</button>
+    </div>
+    <div id="editMsg"></div>
+  </div>
+</div>
+
+<div id="detailModalBg" class="modal-bg hidden">
+  <div class="modal">
+    <h3 style="color:var(--navy);margin-top:0">تفاصيل السجل</h3>
+    <div id="detailBody"></div>
+    <button class="btn secondary" style="margin-top:10px" onclick="closeDetailModal()">إغلاق</button>
+  </div>
+</div>
+
+<script>
+let API_URL = localStorage.getItem('arrive_api_url') || '';
+let USER_NAME = localStorage.getItem('arrive_user') || '';
+let BOOT = null;
+let selectedType = null;
+let currentClientRequestId = null;
+let searchState = { page: 1, pageSize: 25 };
+let editContext = null;
+
+function uuid() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+}
+
+function showConfig() {
+  document.getElementById('appShell').classList.add('hidden');
+  document.getElementById('configScreen').classList.remove('hidden');
+  document.getElementById('cfgUrl').value = API_URL;
+  document.getElementById('cfgUser').value = USER_NAME;
+}
+function saveConfig() {
+  const url = document.getElementById('cfgUrl').value.trim();
+  const user = document.getElementById('cfgUser').value.trim();
+  if (!url || !user) {
+    const e = document.getElementById('cfgErr');
+    e.textContent = 'الرجاء إدخال الرابط والاسم.'; e.classList.remove('hidden');
+    return;
+  }
+  API_URL = url; USER_NAME = user;
+  document.getElementById('configScreen').classList.add('hidden');
+  document.getElementById('appShell').classList.remove('hidden');
+  document.getElementById('userLabel').textContent = '👤 ' + user;
+  document.getElementById('homeUser').textContent = user;
+  init();
+}
+
+// ---- API layer: never assumes success; always surfaces a clear Arabic message on any failure ----
+async function api(action, params) {
+  try {
+    const url = new URL(API_URL);
+    url.searchParams.set('action', action);
+    Object.entries(params || {}).forEach(([k, v]) => v !== undefined && v !== '' && v !== null && url.searchParams.set(k, v));
+    const res = await fetch(url.toString());
+    if (!res.ok) return { ok: false, error: 'رد غير متوقع من الخادم (HTTP ' + res.status + ').' };
+    let json;
+    try { json = await res.json(); } catch (e) { return { ok: false, error: 'رد الخادم لم يكن بصيغة صحيحة — تحقق من نشر Apps Script.' }; }
+    return json;
+  } catch (e) {
+    return { ok: false, error: 'تعذّر الاتصال بالخادم (انقطاع اتصال أو رابط API غير صحيح).' };
+  }
+}
+async function apiPost(body) {
+  try {
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(body) });
+    if (!res.ok) return { ok: false, error: 'رد غير متوقع من الخادم (HTTP ' + res.status + ').' };
+    let json;
+    try { json = await res.json(); } catch (e) { return { ok: false, error: 'رد الخادم لم يكن بصيغة صحيحة — تحقق من نشر Apps Script.' }; }
+    return json;
+  } catch (e) {
+    return { ok: false, error: 'تعذّر الاتصال بالخادم (انقطاع اتصال أو رابط API غير صحيح). لم يُحفظ أي شيء — أعد المحاولة.' };
+  }
+}
+
+function go(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
+  document.getElementById('tab-' + tab).classList.remove('hidden');
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  if (tab === 'home') loadHomeSummary();
+  if (tab === 'dashboard') loadKpis();
+  if (tab === 'reports') { /* wait for user to click "توليد التقرير" so filters are deliberate */ }
+  if (tab === 'settings') loadSettingsView();
+}
+
+async function init() {
+  const boot = await api('bootstrap');
+  if (!boot.ok) {
+    alert('تعذّر الاتصال بالخادم: ' + boot.error + '\nتحقق من رابط الـ API في "تغيير الاتصال".\nلم يُحفظ هذا الرابط — الإعداد السابق (إن وجد) لم يتغيّر.');
+    showConfig();
+    return;
+  }
+  // Persist ONLY after a real, successful connection test — never persist an unverified URL/name.
+  localStorage.setItem('arrive_api_url', API_URL);
+  localStorage.setItem('arrive_user', USER_NAME);
+  BOOT = boot;
+  renderTypeCards();
+  populateAllFilterDropdowns();
+  go('home');
+}
+
+function unionListsFor(kind) {
+  // kind: 'auditor' | 'owner' | 'status' | 'priority' — union of the relevant Settings lists across types
+  const map = { auditor: ['Auditors', 'Users'], owner: ['Users'], status: ['FollowupStatus', 'MatchStatus', 'ReviewResultStatus', 'PenaltyCaseStatus'], priority: ['PriorityLevels'] };
+  const keys = map[kind] || [];
+  const set = new Set();
+  keys.forEach(k => (BOOT.lists[k] || []).forEach(v => set.add(v)));
+  return Array.from(set);
+}
+
+function fillSelect(id, values, keep) {
+  const el = document.getElementById(id);
+  const cur = el.value;
+  el.innerHTML = '<option value="">الكل</option>' + values.map(v => `<option value="${v}">${v}</option>`).join('');
+  if (keep && values.includes(cur)) el.value = cur;
+}
+
+function populateAllFilterDropdowns() {
+  const typeOptions = BOOT.controlTypes.map(ct => ct.key + '::' + ct.name);
+  ['sType', 'kType', 'rType'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = '<option value="">الكل</option>' + BOOT.controlTypes.map(ct => `<option value="${ct.key}">${ct.name}</option>`).join('');
+  });
+  ['sBranch', 'kBranch', 'rBranch'].forEach(id => fillSelect(id, BOOT.lists.Branches || []));
+  fillSelect('sAuditor', unionListsFor('auditor'));
+  fillSelect('kAuditor', unionListsFor('auditor'));
+  fillSelect('sOwner', unionListsFor('owner'));
+  fillSelect('kOwner', unionListsFor('owner'));
+  fillSelect('sStatus', unionListsFor('status'));
+  fillSelect('kStatus', unionListsFor('status'));
+  fillSelect('sPriority', unionListsFor('priority'));
+}
+function onSearchTypeChange() { /* reserved: could narrow branch/status lists per type later */ }
+
+function renderTypeCards() {
+  const box = document.getElementById('typeCards');
+  box.innerHTML = '';
+  BOOT.controlTypes.forEach(ct => {
+    const d = document.createElement('div');
+    d.className = 'type-card'; d.textContent = ct.name;
+    d.onclick = () => selectType(ct.key);
+    box.appendChild(d);
+  });
+}
+
+function buildFieldInput(f, idPrefix) {
+  const id = idPrefix + f.key;
+  if (f.type === 'list' || f.type === 'list_inline') {
+    const options = f.list ? (BOOT.lists[f.list] || []) : (f.list_inline || []);
+    return `<select id="${id}"><option value="">-- اختر --</option>${options.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`;
+  }
+  if (f.type === 'date') return `<input type="date" id="${id}">`;
+  if (f.type === 'time') return `<input type="time" id="${id}">`;
+  if (f.type === 'datetime') return `<input type="datetime-local" id="${id}">`;
+  if (f.type === 'number') return `<input type="number" id="${id}">`;
+  return `<input type="text" id="${id}">`;
+}
+
+function selectType(key) {
+  selectedType = key;
+  currentClientRequestId = uuid();
+  document.querySelectorAll('.type-card').forEach(c => c.classList.toggle('sel', c.textContent === BOOT.controlTypes.find(t=>t.key===key).name));
+  const ct = BOOT.controlTypes.find(t => t.key === key);
+  document.getElementById('formCard').classList.remove('hidden');
+  document.getElementById('formTitle').textContent = '📝 ' + ct.name;
+  const box = document.getElementById('formFields');
+  box.innerHTML = '';
+  ct.fields.forEach(f => {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<label>${f.label} ${f.required ? '<span class="req">*</span>' : ''}</label>${buildFieldInput(f, 'f_')}`;
+    box.appendChild(wrap);
+  });
+  document.getElementById('formMsg').innerHTML = '';
+}
+
+function resetFieldsOnly() {
+  document.querySelectorAll('#formFields input, #formFields select').forEach(el => { el.value = ''; el.classList.remove('field-err'); });
+  currentClientRequestId = uuid(); // a cleared form is a NEW logical request
+}
+
+function clearForm() {
+  resetFieldsOnly();
+  document.getElementById('formMsg').innerHTML = '';
+}
+
+// Mirrors _validate()'s business-rule switch in Code.gs so obviously invalid data never leaves the
+// browser — the backend still re-checks everything on save (this is a UX fast-path, not a replacement
+// for server-side enforcement). Driven by ct.validationRules from bootstrap, so both sides read the
+// exact same rule definitions instead of two independently maintained copies.
+function clientValidateRules(ct, data) {
+  const errors = [];
+  (ct.validationRules || []).forEach(rule => {
+    switch (rule.rule) {
+      case 'receive_after_send':
+        if (data.send_dt && data.receive_dt && new Date(data.receive_dt) < new Date(data.send_dt)) errors.push(rule.message);
+        break;
+      case 'no_approve_before_review':
+        if ((data.status === 'معتمدة' || data.status === 'منفذة') && data.reviewed !== 'نعم') errors.push(rule.message);
+        break;
+      case 'closed_requires_close_date':
+        if (data.status === 'مغلقة' && !data.close_date) errors.push(rule.message);
+        break;
+      case 'late_requires_delay_reason':
+        if (data.status === 'متأخرة' && !data.delay_reason) errors.push(rule.message);
+        break;
+      case 'executed_requires_execute_date':
+        if (data.status === 'منفذة' && !data.execute_date) errors.push(rule.message);
+        break;
+      case 'open_excludes_close_date':
+        if (data.status === 'مفتوحة' && data.close_date) errors.push(rule.message);
+        break;
+      case 'close_date_not_before_base':
+        if (data.close_date && data[rule.baseField] && new Date(data.close_date) < new Date(data[rule.baseField])) errors.push(rule.message);
+        break;
+      case 'morning_count_reconciliation': {
+        if (data.total_shipments === undefined || data.total_shipments === '') break;
+        const total = Number(data.total_shipments) || 0;
+        const sum = (Number(data.matched_shipments) || 0) + (Number(data.unmatched_shipments) || 0) +
+                    (Number(data.not_found_shipments) || 0) + (Number(data.error_shipments) || 0);
+        if (total > 0 && total !== sum) {
+          errors.push(`${rule.message} (الإجمالي المُدخل: ${total}، مجموع الفئات الأربع: ${sum}، الفرق: ${total - sum})`);
+        }
+        break;
+      }
+    }
+  });
+  return errors;
+}
+
+let saveInFlight = false;
+async function submitRecord() {
+  if (saveInFlight) return; // hard guard against double-click beyond the disabled button
+  const ct = BOOT.controlTypes.find(t => t.key === selectedType);
+  const data = {};
+  let missing = [];
+  ct.fields.forEach(f => {
+    const el = document.getElementById('f_' + f.key);
+    el.classList.remove('field-err');
+    const val = el.value;
+    if (f.required && !val) { missing.push(f.label); el.classList.add('field-err'); }
+    if (val !== '') data[f.key] = val;
+  });
+  const msgBox = document.getElementById('formMsg');
+  if (missing.length) {
+    msgBox.innerHTML = `<div class="msg err">⚠️ الحقول التالية إلزامية ولم تُملأ: ${missing.join('، ')}</div>`;
+    return;
+  }
+  const ruleErrors = clientValidateRules(ct, data);
+  if (ruleErrors.length) {
+    // Caught here without even calling the server — data stays exactly as the user typed it (nothing is
+    // cleared), so they can fix the numbers/dates in place and resubmit.
+    msgBox.innerHTML = `<div class="msg err">⚠️ ${ruleErrors.join('<br>')}</div>`;
+    return;
+  }
+  const btn = document.getElementById('saveBtn');
+  saveInFlight = true; btn.disabled = true;
+  msgBox.innerHTML = `<div class="msg info">⏳ جارٍ الحفظ...</div>`;
+  try {
+    const res = await apiPost({ action: 'save', type: selectedType, data, user: USER_NAME, clientRequestId: currentClientRequestId });
+    if (res.ok) {
+      resetFieldsOnly();
+      const now = new Date().toLocaleString('ar-EG');
+      msgBox.innerHTML = `<div class="msg ok">✅ تم حفظ السجل بنجاح<br>
+        رقم السجل: <b>${res.recordId}</b><br>
+        نوع الرقابة: ${res.typeName || ct.name}<br>
+        وقت الحفظ: ${res.savedAt || now}</div>`;
+    } else {
+      msgBox.innerHTML = `<div class="msg err">⚠️ ${(res.errors || [res.error || 'فشل الحفظ لسبب غير معروف.']).join('<br>')}</div>`;
+    }
+  } finally {
+    saveInFlight = false; btn.disabled = false;
+  }
+}
+
+// ---------------- Search ----------------
+function collectSearchFilters() {
+  return {
+    q: document.getElementById('sQ').value,
+    type: document.getElementById('sType').value,
+    branch: document.getElementById('sBranch').value,
+    auditor: document.getElementById('sAuditor').value,
+    owner: document.getElementById('sOwner').value,
+    status: document.getElementById('sStatus').value,
+    priority: document.getElementById('sPriority').value,
+    dateFrom: document.getElementById('sDateFrom').value,
+    dateTo: document.getElementById('sDateTo').value,
+  };
+}
+
+const REF_FIELD = { Morning: null, Returns: 'awb', Scrub: 'awb', Transfer: 'transfer_no', Issues: 'awb', Penalty: 'ref', Overdue: 'awb' };
+const REF_LABEL = { awb: 'رقم البوليصة', transfer_no: 'رقم التحويل' };
+const COMPLIANCE_LABEL = { Transfer: 'حالة الالتزام الزمني بالتأكيد (محسوبة)', Issues: 'تصنيف الإغلاق (محسوب)', Overdue: 'تصنيف التأخير' };
+
+async function runSearch(page) {
+  searchState.page = page || 1;
+  const params = Object.assign({}, collectSearchFilters(), { page: searchState.page, pageSize: searchState.pageSize });
+  document.getElementById('searchResultsInfo').textContent = 'جارٍ البحث...';
+  const res = await api('search', params);
+  if (!res.ok) { document.getElementById('searchResultsInfo').textContent = 'تعذّر البحث: ' + res.error; return; }
+  document.getElementById('searchResultsInfo').textContent = `إجمالي النتائج: ${res.count} — صفحة ${res.page} من ${res.totalPages}`;
+  const table = document.getElementById('searchTable');
+  if (!res.results.length) { table.innerHTML = '<tr><td>لا توجد نتائج مطابقة لهذا البحث/الفلاتر.</td></tr>'; document.getElementById('searchPager').innerHTML = ''; return; }
+  const branchLabelOptions = ['الفرع', 'الفرع المحول'];
+  let html = '<tr><th>النوع</th><th>رقم السجل</th><th>تاريخ الإدخال</th><th>المستخدم المُدخل</th><th>الفرع</th><th>المرجع</th><th>الحالة</th><th>المسؤول</th><th>تاريخ الإغلاق</th><th>الالتزام بالموعد</th><th></th><th></th></tr>';
+  res.results.forEach(r => {
+    const rec = r.record;
+    const branch = branchLabelOptions.map(l => rec[l]).find(v => v) || '—';
+    const refKey = REF_FIELD[r.type];
+    const refLabel = refKey ? (rec[REF_LABEL[refKey] === undefined ? '' : ''] ) : null;
+    const refCol = refKey ? (rec[Object.keys(rec).find(k => k.includes(REF_LABEL[refKey])) || ''] ?? '—') : '—';
+    const statusCandidates = ['حالة المتابعة','حالة الإغلاق','حالة التحويل','حالة المشكلة','حالة الجزاء','حالة الإجراء'];
+    const status = statusCandidates.map(l => rec[l]).find(v => v) || '—';
+    const ownerCandidates = ['المسؤول عن الإجراء','مسؤول المتابعة','المسؤول عن المتابعة','مسؤول التحويل','المسؤول عن الحل','جهة الاعتماد'];
+    const owner = ownerCandidates.map(l => rec[l]).find(v => v) || '—';
+    const closeDate = rec['تاريخ الإغلاق'] || '—';
+    const compliance = COMPLIANCE_LABEL[r.type] ? (rec[COMPLIANCE_LABEL[r.type]] || '—') : '—';
+    const recId = rec['رقم السجل'];
+    html += `<tr>
+      <td>${r.typeName}</td><td>${recId}</td><td>${rec['تاريخ الإدخال']||''}</td><td>${rec['المستخدم (مُدخل السجل)']||''}</td>
+      <td>${branch}</td><td>${refCol}</td><td>${status}</td><td>${owner}</td><td>${closeDate}</td><td>${compliance}</td>
+      <td><button class="btn small secondary" onclick='openDetail(${JSON.stringify(r.type)}, ${JSON.stringify(recId)})'>تفاصيل</button></td>
+      <td><button class="btn small" onclick='openEdit(${JSON.stringify(r.type)}, ${JSON.stringify(recId)})'>تعديل</button></td>
+    </tr>`;
+  });
+  table.innerHTML = html;
+  renderPager(res);
+}
+
+function renderPager(res) {
+  const pager = document.getElementById('searchPager');
+  let html = '';
+  html += `<button class="btn small secondary" ${res.page<=1?'disabled':''} onclick="runSearch(${res.page-1})">السابق</button>`;
+  html += `<span>صفحة ${res.page} / ${res.totalPages}</span>`;
+  html += `<button class="btn small secondary" ${res.page>=res.totalPages?'disabled':''} onclick="runSearch(${res.page+1})">التالي</button>`;
+  pager.innerHTML = html;
+}
+
+async function openDetail(type, id) {
+  const res = await api('getRecord', { type, id });
+  const body = document.getElementById('detailBody');
+  if (!res.ok) { body.innerHTML = `<div class="msg err">${res.error}</div>`; }
+  else {
+    body.innerHTML = '<table>' + Object.entries(res.record).map(([k,v]) => `<tr><th>${k}</th><td>${v===''?'—':v}</td></tr>`).join('') + '</table>';
+  }
+  document.getElementById('detailModalBg').classList.remove('hidden');
+}
+function closeDetailModal() { document.getElementById('detailModalBg').classList.add('hidden'); }
+
+async function openEdit(type, id) {
+  const res = await api('getRecord', { type, id });
+  if (!res.ok) { alert('تعذّر تحميل السجل: ' + res.error); return; }
+  const ct = BOOT.controlTypes.find(t => t.key === type);
+  editContext = { type, id, ct };
+  document.getElementById('editRecordId').textContent = id;
+  const box = document.getElementById('editFields');
+  box.innerHTML = '';
+  ct.fields.forEach(f => {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<label>${f.label} ${f.required ? '<span class="req">*</span>' : ''}</label>${buildFieldInput(f, 'e_')}`;
+    box.appendChild(wrap);
+    const el = wrap.querySelector('input,select');
+    if (el && res.record[f.label] !== undefined) el.value = res.record[f.label];
+  });
+  document.getElementById('editMsg').innerHTML = '';
+  document.getElementById('editModalBg').classList.remove('hidden');
+}
+function closeEditModal() { document.getElementById('editModalBg').classList.add('hidden'); editContext = null; }
+
+async function confirmEdit() {
+  if (!editContext) return;
+  if (!confirm('هل أنت متأكد من حفظ هذا التعديل؟ سيُسجَّل اسمك ووقت التعديل مع السجل.')) return;
+  const { type, id, ct } = editContext;
+  const data = {};
+  let missing = [];
+  ct.fields.forEach(f => {
+    const el = document.getElementById('e_' + f.key);
+    const val = el.value;
+    if (f.required && !val) missing.push(f.label);
+    if (val !== '') data[f.key] = val;
+  });
+  const msgBox = document.getElementById('editMsg');
+  if (missing.length) { msgBox.innerHTML = `<div class="msg err">حقول إلزامية ناقصة: ${missing.join('، ')}</div>`; return; }
+  const ruleErrors = clientValidateRules(ct, data);
+  if (ruleErrors.length) { msgBox.innerHTML = `<div class="msg err">${ruleErrors.join('<br>')}</div>`; return; }
+  document.getElementById('editSaveBtn').disabled = true;
+  msgBox.innerHTML = `<div class="msg info">⏳ جارٍ حفظ التعديل...</div>`;
+  const res = await apiPost({ action: 'update', type, id, data, user: USER_NAME });
+  document.getElementById('editSaveBtn').disabled = false;
+  if (res.ok) {
+    msgBox.innerHTML = `<div class="msg ok">✅ ${res.message}</div>`;
+    setTimeout(() => { closeEditModal(); runSearch(searchState.page); }, 900);
+  } else {
+    msgBox.innerHTML = `<div class="msg err">${(res.errors || [res.error]).join('<br>')}</div>`;
+  }
+}
+
+// ---------------- Dashboard KPIs ----------------
+function collectKpiFilters() {
+  return {
+    dateFrom: document.getElementById('kDateFrom').value,
+    dateTo: document.getElementById('kDateTo').value,
+    branch: document.getElementById('kBranch').value,
+    type: document.getElementById('kType').value,
+    auditor: document.getElementById('kAuditor').value,
+    status: document.getElementById('kStatus').value,
+    owner: document.getElementById('kOwner').value,
+  };
+}
+
+async function loadKpis() {
+  document.getElementById('kpiUpdated').textContent = 'جارٍ التحميل...';
+  const params = collectKpiFilters();
+  const res = await api('kpis', params);
+  if (!res.ok) { document.getElementById('kpiUpdated').textContent = 'خطأ: ' + res.error; return; }
+  document.getElementById('kpiFiltersApplied').textContent = 'الفلاتر المطبَّقة: ' + res.filtersApplied;
+  document.getElementById('kpiUpdated').textContent = 'آخر تحديث: ' + new Date().toLocaleString('ar-EG');
+  renderKpiGrid(res.byType);
+}
+
+function renderKpiGrid(b) {
+  const grid = document.getElementById('kpiGrid');
+  const defs = {
+    Morning: { title: 'المطابقة الصباحية', color: 'var(--navy)', lines: x => [
+      `إجمالي الحالات: ${x.total}`,
+      `نسبة المطابقة: ${x.matchPct != null ? x.matchPct.toFixed(1)+'%' : '—'} (الهدف ${x.target}% من الإعدادات)`,
+    ]},
+    Returns: { title: 'مطابقة المرتجعات', color: 'var(--navy)', lines: x => [
+      `إجمالي: ${x.total} | مطابق: ${x.matched} | غير مطابق: ${x.unmatched}`,
+      `النسبة: ${x.matchPct != null ? x.matchPct.toFixed(1)+'%' : '—'} (الهدف ${x.target}%)`,
+    ]},
+    Scrub: { title: 'مسح الحالات', color: 'var(--orange)', lines: x => [
+      `إجمالي العمليات: ${x.total}`,
+      `قيد المراجعة: ${x.underReview} | مصرح بها: ${x.authorized} | مخالفات مؤكدة: ${x.confirmedViolations}`,
+    ]},
+    Transfer: { title: 'التحويلات', color: 'var(--orange)', lines: x => [
+      `إجمالي: ${x.total} | مؤكد: ${x.confirmed} | متجاوز مدة التأكيد: ${x.late}`,
+      `نسبة الالتزام بالتأكيد: ${x.compliancePct != null ? x.compliancePct.toFixed(1)+'%' : '—'} (الهدف ${x.target} ساعة)`,
+    ]},
+    Issues: { title: 'المشاكل', color: 'var(--red)', lines: x => [
+      `إجمالي: ${x.total} | مفتوحة: ${x.open} | مغلقة: ${x.closed}`,
+      `نسبة الإغلاق في الموعد: ${x.onTimeClosePct != null ? x.onTimeClosePct.toFixed(1)+'%' : '—'} (الهدف ${x.target} أيام)`,
+    ]},
+    Penalty: { title: 'الجزاءات', color: 'var(--red)', lines: x => [
+      `المخالفات: ${x.violations} | معتمدة: ${x.approved} | منفذة: ${x.executed}`,
+      `إجمالي القيمة المنفذة: ${(x.totalValue||0).toLocaleString('ar-EG')}`,
+    ]},
+    Overdue: { title: 'الحالات المتأخرة', color: 'var(--yellow)', lines: x => [
+      `إجمالي: ${x.total} | ضمن الهدف: ${x.withinTarget} | متأخرة: ${x.overdue}`,
+      `أكثر من 15 يومًا: ${x.over15} | أكثر من 20 يومًا: ${x.over20} (الحد المستهدف الحالي: ${x.targetDays} يوم من الإعدادات)`,
+    ]},
+  };
+  const keys = Object.keys(defs).filter(k => b[k]); // only render the cards the (possibly type-filtered) response actually returned
+  if (!keys.length) { grid.innerHTML = '<div class="card msg info">لا توجد بيانات لعرضها بهذه الفلاتر.</div>'; return; }
+  grid.innerHTML = keys.map(k => `
+    <div class="kpi" style="background:${defs[k].color}">
+      <h3>${defs[k].title}</h3>
+      ${defs[k].lines(b[k]).map(l => `<div class="sub">${l}</div>`).join('')}
+    </div>`).join('');
+}
+
+async function loadHomeSummary() {
+  document.getElementById('homeUser').textContent = USER_NAME;
+  document.getElementById('homeStatus').textContent = 'جارٍ تحميل الملخص...';
+  const [kpis, rep] = await Promise.all([api('kpis', {}), api('reports', {})]);
+  if (!kpis.ok || !rep.ok) { document.getElementById('homeStatus').textContent = 'تعذّر تحميل الملخص: ' + (kpis.error || rep.error); return; }
+  const open = kpis.byType.Issues.open + kpis.byType.Overdue.overdue;
+  const tiles = [
+    { num: rep.current.grandTotal, lbl: 'إجمالي السجلات (كل الأنواع)' },
+    { num: open, lbl: 'حالات مفتوحة/متأخرة' },
+    { num: kpis.byType.Overdue.overdue, lbl: 'حالات متأخرة عن الهدف' },
+    { num: kpis.byType.Scrub.confirmedViolations, lbl: 'مخالفات مؤكدة' },
+  ];
+  document.getElementById('homeSummary').innerHTML = tiles.map(t => `<div class="summary-tile"><div class="num">${t.num}</div><div class="lbl">${t.lbl}</div></div>`).join('');
+  document.getElementById('homeStatus').textContent = 'آخر تحديث: ' + new Date().toLocaleString('ar-EG') + ' — الأرقام أعلاه بلا فلاتر (كل البيانات إلى الآن).';
+  document.getElementById('lastUpdateLabel').textContent = '🕒 ' + new Date().toLocaleTimeString('ar-EG');
+}
+
+// ---------------- Reports ----------------
+async function loadReports() {
+  const body = document.getElementById('reportsBody');
+  body.innerHTML = '<div class="card">جارٍ توليد التقرير...</div>';
+  const params = {
+    dateFrom: document.getElementById('rDateFrom').value,
+    dateTo: document.getElementById('rDateTo').value,
+    branch: document.getElementById('rBranch').value,
+    type: document.getElementById('rType').value,
+    comparePrev: document.getElementById('rCompare').checked ? '1' : '0',
+  };
+  const res = await api('reports', params);
+  if (!res.ok) { body.innerHTML = `<div class="card msg err">${res.error}</div>`; return; }
+  const c = res.current;
+  let html = '';
+  html += `<div class="card">
+    <h2 style="color:var(--navy);margin-top:0">📋 ملخص تنفيذي</h2>
+    <div class="status-line">الفترة المحلَّلة: ${res.period.dateFrom || 'بداية البيانات'} → ${res.period.dateTo || 'اليوم'} | الفلاتر: ${res.filtersApplied} | وقت التوليد: ${res.generatedAt}</div>
+    <div class="grid" style="margin-top:10px">
+      <div class="summary-tile"><div class="num">${c.grandTotal}</div><div class="lbl">إجمالي السجلات خلال الفترة</div></div>
+      <div class="summary-tile"><div class="num">${c.confirmedViolations}</div><div class="lbl">مخالفات مؤكدة (من مسح الحالات)</div></div>
+      <div class="summary-tile"><div class="num">${c.overdueCount}</div><div class="lbl">حالات متأخرة عن الهدف</div></div>
+      <div class="summary-tile"><div class="num">${c.openActionsTotal}</div><div class="lbl">إجراءات لم تُغلق بعد</div></div>
+    </div>
+  </div>`;
+
+  if (c.grandTotal === 0) {
+    html += `<div class="card msg info">لا توجد بيانات مطابقة لهذه الفترة/الفلاتر — جرّب توسيع نطاق التاريخ أو إزالة أحد الفلاتر.</div>`;
+  } else {
+    html += `<div class="card"><h3 style="color:var(--navy)">توزيع السجلات حسب نوع الرقابة</h3>
+      <table><tr><th>النوع</th><th>عدد السجلات</th></tr>
+      ${Object.values(c.byType).map(t => `<tr><td>${t.name}</td><td>${t.count}</td></tr>`).join('')}
+      </table></div>`;
+
+    const branches = Object.entries(c.byBranch).sort((a,b) => b[1]-a[1]);
+    html += `<div class="card"><h3 style="color:var(--navy)">توزيع السجلات حسب الفرع</h3>
+      <table><tr><th>الفرع</th><th>عدد السجلات</th></tr>
+      ${branches.length ? branches.map(([b,n]) => `<tr><td>${b}</td><td>${n}</td></tr>`).join('') : '<tr><td colspan="2">لا توجد بيانات فروع في هذه الفترة</td></tr>'}
+      </table></div>`;
+
+    html += `<div class="card"><h3 style="color:var(--navy)">الإجراءات التي لم تُغلق بعد (والمسؤول عن كل إجراء)</h3>
+      <div class="status-line">الإجمالي: ${c.openActionsTotal}${c.openActionsTotal>500?' (تُعرض أول 500 فقط)':''}</div>
+      <div class="table-wrap"><table><tr><th>النوع</th><th>رقم السجل</th><th>المسؤول</th><th>الحالة الحالية</th></tr>
+      ${c.openActions.length ? c.openActions.map(o => `<tr><td>${o.type}</td><td>${o.recordId}</td><td>${o.owner}</td><td>${o.status}</td></tr>`).join('') : '<tr><td colspan="4">لا توجد إجراءات مفتوحة حاليًا</td></tr>'}
+      </table></div></div>`;
+  }
+
+  if (res.previous) {
+    const p = res.previous;
+    function delta(cur, prev) {
+      const d = cur - prev;
+      const sign = d > 0 ? '+' : '';
+      const color = d > 0 ? 'var(--red)' : (d < 0 ? 'var(--green)' : 'var(--gray)');
+      return `<span style="color:${color};font-weight:700">${sign}${d}</span>`;
+    }
+    html += `<div class="card"><h3 style="color:var(--navy)">مقارنة بالفترة السابقة المكافئة (${res.previousPeriod.dateFrom} → ${res.previousPeriod.dateTo})</h3>
+      <table>
+        <tr><th>المؤشر</th><th>الفترة الحالية</th><th>الفترة السابقة</th><th>الفرق</th></tr>
+        <tr><td>إجمالي السجلات</td><td>${c.grandTotal}</td><td>${p.grandTotal}</td><td>${delta(c.grandTotal, p.grandTotal)}</td></tr>
+        <tr><td>مخالفات مؤكدة</td><td>${c.confirmedViolations}</td><td>${p.confirmedViolations}</td><td>${delta(c.confirmedViolations, p.confirmedViolations)}</td></tr>
+        <tr><td>حالات متأخرة</td><td>${c.overdueCount}</td><td>${p.overdueCount}</td><td>${delta(c.overdueCount, p.overdueCount)}</td></tr>
+        <tr><td>إجراءات مفتوحة</td><td>${c.openActionsTotal}</td><td>${p.openActionsTotal}</td><td>${delta(c.openActionsTotal, p.openActionsTotal)}</td></tr>
+      </table>
+      <p class="filters-note">قيمة موجبة (أحمر) تعني زيادة عن الفترة السابقة؛ قيمة سالبة (أخضر) تعني انخفاضًا. "الفرق" = الحالي − السابق.</p>
+    </div>`;
+  }
+
+  html += `<div class="card filters-note">📐 طريقة الحساب: كل الأعداد والنسب هنا محسوبة من نفس بيانات Google Sheets الفعلية عبر Apps Script، بنفس منطق شاشة Dashboard — وليست أرقامًا ثابتة أو مُدخلة يدويًا.</div>`;
+  document.getElementById('reportsBody').innerHTML = html;
+}
+
+function loadSettingsView() {
+  let html = '<div class="grid">';
+  Object.entries(BOOT.lists).forEach(([k, vals]) => {
+    html += `<div><strong>${k}</strong><ul>${vals.map(v=>`<li>${v}</li>`).join('')}</ul></div>`;
+  });
+  html += '</div><h3 style="color:var(--navy)">الأهداف</h3><ul>';
+  Object.entries(BOOT.targets).forEach(([k,v]) => html += `<li>${k}: ${v}</li>`);
+  html += '</ul>';
+  document.getElementById('settingsView').innerHTML = html;
+}
+
+// ---- boot ----
+if (API_URL && USER_NAME) {
+  document.getElementById('appShell').classList.remove('hidden');
+  document.getElementById('userLabel').textContent = '👤 ' + USER_NAME;
+  document.getElementById('homeUser').textContent = USER_NAME;
+  init();
+} else {
+  showConfig();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1282 @@
+{
+  "control_types": [
+    {
+      "key": "Morning",
+      "name": "المطابقة الصباحية",
+      "sheet": "المطابقة الصباحية",
+      "id_prefix": "MM",
+      "fields": [
+        {
+          "key": "date",
+          "label": "التاريخ",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "time",
+          "label": "وقت المطابقة",
+          "type": "time",
+          "required": false
+        },
+        {
+          "key": "branch",
+          "label": "الفرع",
+          "type": "list",
+          "list": "Branches",
+          "required": true
+        },
+        {
+          "key": "auditor",
+          "label": "اسم المدقق",
+          "type": "list",
+          "list": "Auditors",
+          "required": true
+        },
+        {
+          "key": "total_shipments",
+          "label": "إجمالي الشحنات",
+          "type": "number",
+          "required": true
+        },
+        {
+          "key": "matched_shipments",
+          "label": "شحنات مطابقة",
+          "type": "number",
+          "required": true
+        },
+        {
+          "key": "unmatched_shipments",
+          "label": "شحنات غير مطابقة",
+          "type": "number",
+          "required": false
+        },
+        {
+          "key": "not_found_shipments",
+          "label": "شحنات لم يتم العثور عليها",
+          "type": "number",
+          "required": false
+        },
+        {
+          "key": "error_shipments",
+          "label": "شحنات بها أخطاء",
+          "type": "number",
+          "required": false
+        },
+        {
+          "key": "issue_type",
+          "label": "نوع المشكلة",
+          "type": "list",
+          "list": "IssueTypes",
+          "required": false
+        },
+        {
+          "key": "issue_detail",
+          "label": "تفاصيل المشكلة",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "owner",
+          "label": "المسؤول عن الإجراء",
+          "type": "list",
+          "list": "Users",
+          "required": false
+        },
+        {
+          "key": "status",
+          "label": "حالة المتابعة",
+          "type": "list",
+          "list": "FollowupStatus",
+          "required": false
+        },
+        {
+          "key": "close_date",
+          "label": "تاريخ الإغلاق",
+          "type": "date",
+          "required": false
+        },
+        {
+          "key": "notes",
+          "label": "ملاحظات",
+          "type": "text",
+          "required": false
+        }
+      ],
+      "computed": [
+        {
+          "key": "match_pct",
+          "label": "نسبة المطابقة",
+          "formula": "matched_shipments/total_shipments",
+          "format": "percent1"
+        },
+        {
+          "key": "count_check",
+          "label": "تحقق الأعداد",
+          "formula": "count_check_morning"
+        },
+        {
+          "key": "count_diff",
+          "label": "الفرق عن الإجمالي (محسوب)",
+          "formula": "morning_count_diff"
+        }
+      ],
+      "filters": {
+        "date": "date",
+        "branch": [
+          "branch"
+        ],
+        "auditor": "auditor",
+        "owner": [
+          "owner"
+        ],
+        "status": [
+          "status"
+        ],
+        "priority": null
+      },
+      "validation_rules": [
+        {
+          "rule": "morning_count_reconciliation",
+          "message": "مجموع (شحنات مطابقة + غير مطابقة + لم يتم العثور عليها + بها أخطاء) لا يساوي إجمالي الشحنات — راجع الأعداد قبل الحفظ."
+        },
+        {
+          "rule": "closed_requires_close_date",
+          "message": "الحالة \"مغلقة\" تتطلب تسجيل تاريخ الإغلاق."
+        },
+        {
+          "rule": "open_excludes_close_date",
+          "message": "الحالة \"مفتوحة\" لا يجب أن يكون لها تاريخ إغلاق مسجَّل — امسح تاريخ الإغلاق أو غيّر الحالة إلى \"مغلقة\"."
+        },
+        {
+          "rule": "close_date_not_before_base",
+          "baseField": "date",
+          "message": "تاريخ الإغلاق لا يمكن أن يكون قبل تاريخ المطابقة نفسه."
+        }
+      ]
+    },
+    {
+      "key": "Returns",
+      "name": "مطابقة المرتجعات",
+      "sheet": "مطابقة المرتجعات",
+      "id_prefix": "RM",
+      "fields": [
+        {
+          "key": "date",
+          "label": "التاريخ",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "branch",
+          "label": "الفرع",
+          "type": "list",
+          "list": "Branches",
+          "required": true
+        },
+        {
+          "key": "awb",
+          "label": "رقم البوليصة",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "merchant",
+          "label": "المرسل / التاجر",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "customer",
+          "label": "العميل",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "return_reason",
+          "label": "سبب المرتجع",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "return_log_date",
+          "label": "تاريخ تسجيل المرتجع",
+          "type": "date",
+          "required": false
+        },
+        {
+          "key": "return_arrival_date",
+          "label": "تاريخ وصول المرتجع",
+          "type": "date",
+          "required": false
+        },
+        {
+          "key": "match_status",
+          "label": "حالة المطابقة",
+          "type": "list",
+          "list": "MatchStatus",
+          "required": true
+        },
+        {
+          "key": "review_result",
+          "label": "نتيجة المراجعة",
+          "type": "list",
+          "list": "ReviewResultStatus",
+          "required": false
+        },
+        {
+          "key": "system_status",
+          "label": "حالة الشحنة بالنظام",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "actual_status",
+          "label": "الحالة الفعلية",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "mismatch_reason",
+          "label": "سبب عدم المطابقة",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "owner",
+          "label": "مسؤول المتابعة",
+          "type": "list",
+          "list": "Users",
+          "required": false
+        },
+        {
+          "key": "status",
+          "label": "حالة الإغلاق",
+          "type": "list",
+          "list": "FollowupStatus",
+          "required": false
+        },
+        {
+          "key": "close_date",
+          "label": "تاريخ الإغلاق",
+          "type": "date",
+          "required": false
+        },
+        {
+          "key": "notes",
+          "label": "ملاحظات",
+          "type": "text",
+          "required": false
+        }
+      ],
+      "computed": [],
+      "filters": {
+        "date": "date",
+        "branch": [
+          "branch"
+        ],
+        "auditor": null,
+        "owner": [
+          "owner"
+        ],
+        "status": [
+          "status",
+          "match_status"
+        ],
+        "priority": null
+      },
+      "validation_rules": [
+        {
+          "rule": "closed_requires_close_date",
+          "message": "الحالة \"مغلقة\" تتطلب تسجيل تاريخ الإغلاق."
+        },
+        {
+          "rule": "open_excludes_close_date",
+          "message": "الحالة \"مفتوحة\" لا يجب أن يكون لها تاريخ إغلاق مسجَّل — امسح تاريخ الإغلاق أو غيّر الحالة إلى \"مغلقة\"."
+        },
+        {
+          "rule": "close_date_not_before_base",
+          "baseField": "date",
+          "message": "تاريخ الإغلاق لا يمكن أن يكون قبل تاريخ السجل نفسه."
+        }
+      ]
+    },
+    {
+      "key": "Scrub",
+      "name": "مسح الحالات",
+      "sheet": "مسح الحالات",
+      "id_prefix": "SC",
+      "fields": [
+        {
+          "key": "date",
+          "label": "التاريخ",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "time",
+          "label": "وقت العملية",
+          "type": "time",
+          "required": false
+        },
+        {
+          "key": "awb",
+          "label": "رقم البوليصة",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "branch",
+          "label": "الفرع",
+          "type": "list",
+          "list": "Branches",
+          "required": true
+        },
+        {
+          "key": "user",
+          "label": "المستخدم",
+          "type": "list",
+          "list": "Users",
+          "required": true
+        },
+        {
+          "key": "status_before",
+          "label": "الحالة قبل التعديل",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "status_after",
+          "label": "الحالة بعد التعديل",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "op_type",
+          "label": "نوع العملية",
+          "type": "list",
+          "list_inline": [
+            "مسح",
+            "تعديل"
+          ],
+          "required": false
+        },
+        {
+          "key": "reason",
+          "label": "سبب المسح أو التعديل",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "has_approval",
+          "label": "هل توجد موافقة؟",
+          "type": "list",
+          "list": "YesNo",
+          "required": true
+        },
+        {
+          "key": "approval_ref",
+          "label": "مرجع الموافقة",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "review_result",
+          "label": "نتيجة المراجعة",
+          "type": "list",
+          "list": "ReviewResultStatus",
+          "required": false
+        },
+        {
+          "key": "violation_type",
+          "label": "تصنيف المخالفة",
+          "type": "list",
+          "list": "ViolationTypes",
+          "required": false
+        },
+        {
+          "key": "required_action",
+          "label": "الإجراء المطلوب",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "owner",
+          "label": "المسؤول عن المتابعة",
+          "type": "list",
+          "list": "Users",
+          "required": false
+        },
+        {
+          "key": "status",
+          "label": "حالة المتابعة",
+          "type": "list",
+          "list": "FollowupStatus",
+          "required": false
+        },
+        {
+          "key": "close_date",
+          "label": "تاريخ الإغلاق",
+          "type": "date",
+          "required": false
+        },
+        {
+          "key": "notes",
+          "label": "ملاحظات",
+          "type": "text",
+          "required": false
+        }
+      ],
+      "computed": [],
+      "filters": {
+        "date": "date",
+        "branch": [
+          "branch"
+        ],
+        "auditor": "user",
+        "owner": [
+          "owner"
+        ],
+        "status": [
+          "status",
+          "review_result"
+        ],
+        "priority": null
+      },
+      "validation_rules": [
+        {
+          "rule": "closed_requires_close_date",
+          "message": "الحالة \"مغلقة\" تتطلب تسجيل تاريخ الإغلاق."
+        },
+        {
+          "rule": "open_excludes_close_date",
+          "message": "الحالة \"مفتوحة\" لا يجب أن يكون لها تاريخ إغلاق مسجَّل — امسح تاريخ الإغلاق أو غيّر الحالة إلى \"مغلقة\"."
+        },
+        {
+          "rule": "close_date_not_before_base",
+          "baseField": "date",
+          "message": "تاريخ الإغلاق لا يمكن أن يكون قبل تاريخ السجل نفسه."
+        }
+      ]
+    },
+    {
+      "key": "Transfer",
+      "name": "التحويلات",
+      "sheet": "التحويلات",
+      "id_prefix": "TR",
+      "fields": [
+        {
+          "key": "date",
+          "label": "تاريخ التحويل",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "transfer_no",
+          "label": "رقم التحويل",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "awb",
+          "label": "رقم البوليصة",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "from_branch",
+          "label": "الفرع المحول",
+          "type": "list",
+          "list": "Branches",
+          "required": true
+        },
+        {
+          "key": "to_branch",
+          "label": "الفرع المستلم",
+          "type": "list",
+          "list": "Branches",
+          "required": true
+        },
+        {
+          "key": "owner",
+          "label": "مسؤول التحويل",
+          "type": "list",
+          "list": "Users",
+          "required": false
+        },
+        {
+          "key": "send_dt",
+          "label": "تاريخ ووقت الإرسال",
+          "type": "datetime",
+          "required": false
+        },
+        {
+          "key": "receive_dt",
+          "label": "تاريخ ووقت الاستلام",
+          "type": "datetime",
+          "required": false
+        },
+        {
+          "key": "status",
+          "label": "حالة التحويل",
+          "type": "list",
+          "list": "TransferStatus",
+          "required": true
+        },
+        {
+          "key": "confirmed",
+          "label": "هل تم التأكيد؟",
+          "type": "list",
+          "list": "YesNo",
+          "required": false
+        },
+        {
+          "key": "confirm_method",
+          "label": "وسيلة التأكيد",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "confirm_time",
+          "label": "وقت التأكيد",
+          "type": "time",
+          "required": false
+        },
+        {
+          "key": "has_issue",
+          "label": "وجود مشكلة",
+          "type": "list",
+          "list": "YesNo",
+          "required": false
+        },
+        {
+          "key": "issue_type",
+          "label": "نوع المشكلة",
+          "type": "list",
+          "list": "IssueTypes",
+          "required": false
+        },
+        {
+          "key": "issue_owner",
+          "label": "المسؤول عن المتابعة",
+          "type": "list",
+          "list": "Users",
+          "required": false
+        },
+        {
+          "key": "close_status",
+          "label": "حالة الإغلاق",
+          "type": "list",
+          "list": "FollowupStatus",
+          "required": false
+        },
+        {
+          "key": "notes",
+          "label": "ملاحظات",
+          "type": "text",
+          "required": false
+        }
+      ],
+      "computed": [
+        {
+          "key": "duration_to_receive_hrs",
+          "label": "مدة الوصول (ساعة)",
+          "formula": "duration_hours(receive_dt, send_dt)"
+        },
+        {
+          "key": "confirm_duration_hrs",
+          "label": "مدة تأكيد التحويل (ساعة)",
+          "formula": "confirm_duration_hours"
+        },
+        {
+          "key": "sla_status",
+          "label": "حالة الالتزام الزمني بالتأكيد (محسوبة)",
+          "formula": "transfer_sla"
+        }
+      ],
+      "validation_rules": [
+        {
+          "rule": "receive_after_send",
+          "message": "وقت الاستلام لا يمكن أن يسبق وقت الإرسال لنفس السطر"
+        }
+      ],
+      "filters": {
+        "date": "date",
+        "branch": [
+          "from_branch",
+          "to_branch"
+        ],
+        "auditor": null,
+        "owner": [
+          "owner",
+          "issue_owner"
+        ],
+        "status": [
+          "status",
+          "close_status"
+        ],
+        "priority": null
+      }
+    },
+    {
+      "key": "Issues",
+      "name": "المشاكل اليومية",
+      "sheet": "المشاكل اليومية",
+      "id_prefix": "DI",
+      "fields": [
+        {
+          "key": "detect_date",
+          "label": "تاريخ الاكتشاف",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "detect_time",
+          "label": "وقت الاكتشاف",
+          "type": "time",
+          "required": false
+        },
+        {
+          "key": "branch",
+          "label": "الفرع",
+          "type": "list",
+          "list": "Branches",
+          "required": true
+        },
+        {
+          "key": "department",
+          "label": "القسم",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "source",
+          "label": "مصدر اكتشاف المشكلة",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "issue_type",
+          "label": "نوع المشكلة",
+          "type": "list",
+          "list": "IssueTypes",
+          "required": true
+        },
+        {
+          "key": "description",
+          "label": "وصف المشكلة",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "awb",
+          "label": "رقم البوليصة إن وجد",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "affected_count",
+          "label": "عدد الحالات المتأثرة",
+          "type": "number",
+          "required": false
+        },
+        {
+          "key": "priority",
+          "label": "درجة الأولوية",
+          "type": "list",
+          "list": "PriorityLevels",
+          "required": true
+        },
+        {
+          "key": "owner",
+          "label": "المسؤول عن الحل",
+          "type": "list",
+          "list": "Users",
+          "required": true
+        },
+        {
+          "key": "required_action",
+          "label": "الإجراء المطلوب",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "due_date",
+          "label": "تاريخ الاستحقاق",
+          "type": "date",
+          "required": false
+        },
+        {
+          "key": "status",
+          "label": "حالة المشكلة",
+          "type": "list",
+          "list": "FollowupStatus",
+          "required": true
+        },
+        {
+          "key": "close_date",
+          "label": "تاريخ الإغلاق",
+          "type": "date",
+          "required": false
+        },
+        {
+          "key": "delay_reason",
+          "label": "سبب التأخير",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "corrective_action",
+          "label": "الإجراء التصحيحي",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "preventive_action",
+          "label": "الإجراء الوقائي",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "auditor_notes",
+          "label": "ملاحظات المدقق",
+          "type": "text",
+          "required": false
+        }
+      ],
+      "computed": [
+        {
+          "key": "close_duration_days",
+          "label": "مدة الإغلاق (أيام)",
+          "formula": "close_duration_days"
+        },
+        {
+          "key": "delay_alert",
+          "label": "تنبيه التأخر",
+          "formula": "issue_delay_alert"
+        },
+        {
+          "key": "close_classification",
+          "label": "تصنيف الإغلاق (محسوب)",
+          "formula": "issue_close_classification"
+        }
+      ],
+      "filters": {
+        "date": "detect_date",
+        "branch": [
+          "branch"
+        ],
+        "auditor": null,
+        "owner": [
+          "owner"
+        ],
+        "status": [
+          "status"
+        ],
+        "priority": "priority"
+      },
+      "validation_rules": [
+        {
+          "rule": "closed_requires_close_date",
+          "message": "الحالة \"مغلقة\" تتطلب تسجيل تاريخ الإغلاق."
+        },
+        {
+          "rule": "late_requires_delay_reason",
+          "message": "الحالة \"متأخرة\" تتطلب تسجيل سبب التأخير."
+        },
+        {
+          "rule": "open_excludes_close_date",
+          "message": "الحالة \"مفتوحة\" لا يجب أن يكون لها تاريخ إغلاق مسجَّل — امسح تاريخ الإغلاق أو غيّر الحالة إلى \"مغلقة\"."
+        },
+        {
+          "rule": "close_date_not_before_base",
+          "baseField": "detect_date",
+          "message": "تاريخ الإغلاق لا يمكن أن يكون قبل تاريخ رصد المشكلة."
+        }
+      ]
+    },
+    {
+      "key": "Penalty",
+      "name": "الجزاءات",
+      "sheet": "الجزاءات",
+      "id_prefix": "PN",
+      "fields": [
+        {
+          "key": "log_date",
+          "label": "تاريخ تسجيل المخالفة",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "approve_date",
+          "label": "تاريخ اعتماد الجزاء",
+          "type": "date",
+          "required": false
+        },
+        {
+          "key": "branch",
+          "label": "الفرع",
+          "type": "list",
+          "list": "Branches",
+          "required": true
+        },
+        {
+          "key": "employee",
+          "label": "اسم الموظف",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "employee_id",
+          "label": "الرقم الوظيفي إن وجد",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "violation_type",
+          "label": "نوع المخالفة",
+          "type": "list",
+          "list": "ViolationTypes",
+          "required": true
+        },
+        {
+          "key": "description",
+          "label": "وصف المخالفة",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "ref",
+          "label": "مرجع المشكلة أو البوليصة",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "severity",
+          "label": "درجة المخالفة",
+          "type": "list",
+          "list": "PriorityLevels",
+          "required": false
+        },
+        {
+          "key": "reviewed",
+          "label": "هل تمت المراجعة؟",
+          "type": "list",
+          "list": "YesNo",
+          "required": true
+        },
+        {
+          "key": "review_decision",
+          "label": "قرار المراجعة",
+          "type": "list",
+          "list": "ReviewResultStatus",
+          "required": false
+        },
+        {
+          "key": "penalty_type",
+          "label": "نوع الجزاء المعتمد",
+          "type": "list",
+          "list": "PenaltyTypes",
+          "required": false
+        },
+        {
+          "key": "penalty_value",
+          "label": "قيمة الجزاء",
+          "type": "number",
+          "required": false
+        },
+        {
+          "key": "approver",
+          "label": "جهة الاعتماد",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "status",
+          "label": "حالة الجزاء",
+          "type": "list",
+          "list": "PenaltyCaseStatus",
+          "required": true
+        },
+        {
+          "key": "execute_date",
+          "label": "تاريخ التنفيذ",
+          "type": "date",
+          "required": false
+        },
+        {
+          "key": "appeal_status",
+          "label": "حالة التظلم إن وجد",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "notes",
+          "label": "ملاحظات",
+          "type": "text",
+          "required": false
+        }
+      ],
+      "computed": [
+        {
+          "key": "approved_value",
+          "label": "القيمة المعتمدة (محسوبة)",
+          "formula": "approved_value"
+        },
+        {
+          "key": "executed_value",
+          "label": "القيمة المنفذة فعليًا (محسوبة)",
+          "formula": "executed_value"
+        }
+      ],
+      "validation_rules": [
+        {
+          "rule": "no_approve_before_review",
+          "message": "لا يمكن اعتماد أو تنفيذ جزاء قبل اكتمال المراجعة (هل تمت المراجعة؟ = نعم)"
+        },
+        {
+          "rule": "executed_requires_execute_date",
+          "message": "حالة الجزاء \"منفذة\" تتطلب تسجيل تاريخ التنفيذ."
+        }
+      ],
+      "filters": {
+        "date": "log_date",
+        "branch": [
+          "branch"
+        ],
+        "auditor": null,
+        "owner": [
+          "approver"
+        ],
+        "status": [
+          "status",
+          "review_decision"
+        ],
+        "priority": "severity"
+      }
+    },
+    {
+      "key": "Overdue",
+      "name": "الحالات المتأخرة",
+      "sheet": "الحالات المتأخرة",
+      "id_prefix": "DC",
+      "fields": [
+        {
+          "key": "detect_date",
+          "label": "تاريخ الرصد",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "awb",
+          "label": "رقم البوليصة",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "branch",
+          "label": "الفرع",
+          "type": "list",
+          "list": "Branches",
+          "required": true
+        },
+        {
+          "key": "governorate",
+          "label": "المحافظة / المنطقة",
+          "type": "list",
+          "list": "Governorates",
+          "required": false
+        },
+        {
+          "key": "sender",
+          "label": "المرسل",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "shipment_status",
+          "label": "حالة الشحنة",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "created_date",
+          "label": "تاريخ إنشاء الطلب",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "delay_reason",
+          "label": "سبب التأخير",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "owner",
+          "label": "المسؤول عن المتابعة",
+          "type": "list",
+          "list": "Users",
+          "required": false
+        },
+        {
+          "key": "required_action",
+          "label": "الإجراء المطلوب",
+          "type": "text",
+          "required": false
+        },
+        {
+          "key": "status",
+          "label": "حالة الإجراء",
+          "type": "list",
+          "list": "FollowupStatus",
+          "required": false
+        },
+        {
+          "key": "close_date",
+          "label": "تاريخ الإغلاق",
+          "type": "date",
+          "required": false
+        },
+        {
+          "key": "notes",
+          "label": "ملاحظات",
+          "type": "text",
+          "required": false
+        }
+      ],
+      "computed": [
+        {
+          "key": "age_days",
+          "label": "عمر الطلب بالأيام (من تاريخ إنشاء الطلب)",
+          "formula": "age_days"
+        },
+        {
+          "key": "case_age_days",
+          "label": "عمر الحالة بالأيام (من تاريخ الرصد)",
+          "formula": "case_age_days"
+        },
+        {
+          "key": "days_since_update",
+          "label": "مدة عدم التحديث بالأيام",
+          "formula": "days_since_update"
+        },
+        {
+          "key": "target_age",
+          "label": "الحد المستهدف (من الإعدادات)",
+          "formula": "target_CaseAgeDays"
+        },
+        {
+          "key": "overdue_days",
+          "label": "عدد أيام التجاوز بعد الاستحقاق",
+          "formula": "overdue_days"
+        },
+        {
+          "key": "delay_class",
+          "label": "تصنيف التأخير",
+          "formula": "delay_classification"
+        }
+      ],
+      "filters": {
+        "date": "detect_date",
+        "branch": [
+          "branch"
+        ],
+        "auditor": null,
+        "owner": [
+          "owner"
+        ],
+        "status": [
+          "status",
+          "delay_class"
+        ],
+        "priority": null
+      },
+      "validation_rules": [
+        {
+          "rule": "closed_requires_close_date",
+          "message": "الحالة \"مغلقة\" تتطلب تسجيل تاريخ الإغلاق."
+        },
+        {
+          "rule": "open_excludes_close_date",
+          "message": "الحالة \"مفتوحة\" لا يجب أن يكون لها تاريخ إغلاق مسجَّل — امسح تاريخ الإغلاق أو غيّر الحالة إلى \"مغلقة\"."
+        },
+        {
+          "rule": "close_date_not_before_base",
+          "baseField": "detect_date",
+          "message": "تاريخ الإغلاق لا يمكن أن يكون قبل تاريخ رصد الحالة."
+        }
+      ]
+    }
+  ],
+  "lists": {
+    "Branches": [
+      "القاهرة الجديدة",
+      "مدينة نصر",
+      "المعادي",
+      "6 أكتوبر",
+      "الشيخ زايد",
+      "الإسكندرية - سموحة",
+      "الإسكندرية - محرم بك",
+      "المنصورة",
+      "طنطا",
+      "الزقازيق",
+      "أسيوط",
+      "المنيا",
+      "بني سويف",
+      "الفيوم",
+      "دمياط"
+    ],
+    "Governorates": [
+      "القاهرة",
+      "الجيزة",
+      "الإسكندرية",
+      "الدقهلية",
+      "الغربية",
+      "الشرقية",
+      "أسيوط",
+      "المنيا",
+      "بني سويف",
+      "الفيوم",
+      "دمياط"
+    ],
+    "Auditors": [
+      "أحمد سالم",
+      "منى عبد الله",
+      "كريم فتحي",
+      "هبة الشريف",
+      "محمد سعيد"
+    ],
+    "Users": [
+      "أحمد سالم",
+      "منى عبد الله",
+      "كريم فتحي",
+      "هبة الشريف",
+      "محمد سعيد",
+      "مسؤول الفرع",
+      "مسؤول الوردية"
+    ],
+    "IssueTypes": [
+      "خطأ في البيانات",
+      "شحنة مفقودة",
+      "تأخير تسليم",
+      "سوء تعامل مع العميل",
+      "خلل في النظام",
+      "مخالفة إجراء",
+      "أخرى"
+    ],
+    "FollowupStatus": [
+      "مفتوحة",
+      "قيد المتابعة",
+      "مغلقة",
+      "متأخرة"
+    ],
+    "PriorityLevels": [
+      "منخفضة",
+      "متوسطة",
+      "عالية",
+      "حرجة"
+    ],
+    "ViolationTypes": [
+      "تعديل حالة بدون صلاحية",
+      "عدم اتباع إجراء",
+      "تأخير غير مبرر",
+      "خطأ متكرر",
+      "تلاعب في البيانات",
+      "أخرى"
+    ],
+    "TransferStatus": [
+      "تم الإرسال",
+      "تم الاستلام",
+      "تم التأكيد",
+      "متأخر",
+      "به مشكلة",
+      "مغلق"
+    ],
+    "PenaltyTypes": [
+      "تنبيه شفهي",
+      "إنذار كتابي",
+      "خصم مالي",
+      "إيقاف عن العمل",
+      "إنهاء خدمة"
+    ],
+    "YesNo": [
+      "نعم",
+      "لا"
+    ],
+    "MatchStatus": [
+      "مطابق",
+      "غير مطابق"
+    ],
+    "ReviewResultStatus": [
+      "قيد المراجعة",
+      "مصرح به",
+      "مخالفة مؤكدة"
+    ],
+    "PenaltyCaseStatus": [
+      "مسجلة",
+      "قيد المراجعة",
+      "معتمدة",
+      "منفذة",
+      "متظلم عليها"
+    ]
+  },
+  "targets": {
+    "target_MorningMatchPct": 98,
+    "target_ReturnsMatchPct": 97,
+    "target_TransferConfirmHrs": 24,
+    "target_IssueCloseDays": 3,
+    "target_CaseAgeDays": 5
+  },
+  "age_buckets": [
+    [
+      0,
+      5,
+      "0–5 أيام"
+    ],
+    [
+      6,
+      10,
+      "6–10 أيام"
+    ],
+    [
+      11,
+      15,
+      "11–15 يومًا"
+    ],
+    [
+      16,
+      20,
+      "16–20 يومًا"
+    ],
+    [
+      21,
+      99999,
+      "أكثر من 20 يومًا"
+    ]
+  ],
+  "system_columns": [
+    {
+      "key": "record_id",
+      "label": "رقم السجل"
+    },
+    {
+      "key": "entry_date",
+      "label": "تاريخ الإدخال"
+    },
+    {
+      "key": "entry_time",
+      "label": "وقت الإدخال"
+    },
+    {
+      "key": "entered_by",
+      "label": "المستخدم (مُدخل السجل)"
+    },
+    {
+      "key": "last_modified",
+      "label": "آخر تعديل"
+    },
+    {
+      "key": "modified_by",
+      "label": "المستخدم المعدّل"
+    }
+  ]
+}
