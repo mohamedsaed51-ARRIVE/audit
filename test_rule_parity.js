@@ -16,7 +16,7 @@ const path = require('path');
 const { buildMockSpreadsheet, buildSandbox } = require('./gs_sandbox');
 
 const schema = JSON.parse(fs.readFileSync(path.join(__dirname, '../backend/schema.json'), 'utf8'));
-const codeGsSource = fs.readFileSync(path.join(__dirname, '../appsscript/Code.gs'), 'utf8');
+const codeGsSource = fs.readFileSync(path.join(__dirname, 'Code.gs'), 'utf8');
 const dashboardSrc = fs.readFileSync(path.join(__dirname, '../dashboard/index.html'), 'utf8');
 
 // Extract the exact clientValidateRules(...) { ... } function body from the live index.html —

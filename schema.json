@@ -118,6 +118,12 @@
           "key": "count_diff",
           "label": "الفرق عن الإجمالي (محسوب)",
           "formula": "morning_count_diff"
+        },
+        {
+          "key": "branch_id",
+          "label": "معرّف الفرع (داخلي)",
+          "formula": "branch_id_lookup",
+          "source_field": "branch"
         }
       ],
       "filters": {
@@ -268,7 +274,14 @@
           "required": false
         }
       ],
-      "computed": [],
+      "computed": [
+        {
+          "key": "branch_id",
+          "label": "معرّف الفرع (داخلي)",
+          "formula": "branch_id_lookup",
+          "source_field": "branch"
+        }
+      ],
       "filters": {
         "date": "date",
         "branch": [
@@ -426,7 +439,14 @@
           "required": false
         }
       ],
-      "computed": [],
+      "computed": [
+        {
+          "key": "branch_id",
+          "label": "معرّف الفرع (داخلي)",
+          "formula": "branch_id_lookup",
+          "source_field": "branch"
+        }
+      ],
       "filters": {
         "date": "date",
         "branch": [
@@ -591,6 +611,18 @@
           "key": "sla_status",
           "label": "حالة الالتزام الزمني بالتأكيد (محسوبة)",
           "formula": "transfer_sla"
+        },
+        {
+          "key": "from_branch_id",
+          "label": "معرّف الفرع المحول (داخلي)",
+          "formula": "branch_id_lookup",
+          "source_field": "from_branch"
+        },
+        {
+          "key": "to_branch_id",
+          "label": "معرّف الفرع المستلم (داخلي)",
+          "formula": "branch_id_lookup",
+          "source_field": "to_branch"
         }
       ],
       "validation_rules": [
@@ -758,6 +790,12 @@
           "key": "close_classification",
           "label": "تصنيف الإغلاق (محسوب)",
           "formula": "issue_close_classification"
+        },
+        {
+          "key": "branch_id",
+          "label": "معرّف الفرع (داخلي)",
+          "formula": "branch_id_lookup",
+          "source_field": "branch"
         }
       ],
       "filters": {
@@ -926,6 +964,12 @@
           "key": "executed_value",
           "label": "القيمة المنفذة فعليًا (محسوبة)",
           "formula": "executed_value"
+        },
+        {
+          "key": "branch_id",
+          "label": "معرّف الفرع (داخلي)",
+          "formula": "branch_id_lookup",
+          "source_field": "branch"
         }
       ],
       "validation_rules": [
@@ -1073,6 +1117,12 @@
           "key": "delay_class",
           "label": "تصنيف التأخير",
           "formula": "delay_classification"
+        },
+        {
+          "key": "branch_id",
+          "label": "معرّف الفرع (داخلي)",
+          "formula": "branch_id_lookup",
+          "source_field": "branch"
         }
       ],
       "filters": {
@@ -1224,7 +1274,8 @@
     "target_ReturnsMatchPct": 97,
     "target_TransferConfirmHrs": 24,
     "target_IssueCloseDays": 3,
-    "target_CaseAgeDays": 5
+    "target_CaseAgeDays": 5,
+    "auth_enabled": 0
   },
   "age_buckets": [
     [
@@ -1278,5 +1329,121 @@
       "key": "modified_by",
       "label": "المستخدم المعدّل"
     }
-  ]
+  ],
+  "admin_sheets": [
+    {
+      "sheet": "الموظفون",
+      "headers": [
+        "Employee ID",
+        "الاسم الكامل",
+        "اسم المستخدم",
+        "Password Hash",
+        "Salt",
+        "الدور",
+        "الفروع المسموحة",
+        "الحالة",
+        "تاريخ الإنشاء",
+        "آخر تسجيل دخول",
+        "محاولات الدخول الفاشلة",
+        "آخر محاولة فاشلة"
+      ]
+    },
+    {
+      "sheet": "_AuditLog",
+      "headers": [
+        "التاريخ والوقت",
+        "المستخدم",
+        "العملية",
+        "النتيجة",
+        "التفاصيل",
+        "معرّفات الفروع المرتبطة"
+      ]
+    }
+  ],
+  "role_permissions": {
+    "Administrator": {
+      "actions": [
+        "save",
+        "update",
+        "viewSearch",
+        "viewKpis",
+        "viewReports",
+        "viewAuditLog",
+        "manageBranches",
+        "manageEmployees",
+        "manageSettings"
+      ],
+      "branchScope": "all",
+      "canBeAssignedAllBranches": true,
+      "pages": [
+        "dashboard",
+        "search",
+        "reports",
+        "settings"
+      ]
+    },
+    "Audit Manager": {
+      "actions": [
+        "save",
+        "update",
+        "viewSearch",
+        "viewKpis",
+        "viewReports",
+        "viewAuditLog"
+      ],
+      "branchScope": "own",
+      "canBeAssignedAllBranches": true,
+      "pages": [
+        "dashboard",
+        "search",
+        "reports",
+        "settings"
+      ]
+    },
+    "Senior Auditor": {
+      "actions": [
+        "save",
+        "update",
+        "viewSearch",
+        "viewKpis",
+        "viewReports",
+        "viewAuditLog"
+      ],
+      "branchScope": "own",
+      "canBeAssignedAllBranches": false,
+      "pages": [
+        "dashboard",
+        "search",
+        "reports"
+      ]
+    },
+    "Auditor": {
+      "actions": [
+        "save",
+        "update",
+        "viewSearch",
+        "viewKpis"
+      ],
+      "branchScope": "own",
+      "canBeAssignedAllBranches": false,
+      "pages": [
+        "dashboard",
+        "search"
+      ]
+    },
+    "Audit Viewer": {
+      "actions": [
+        "viewSearch",
+        "viewKpis",
+        "viewReports"
+      ],
+      "branchScope": "own",
+      "canBeAssignedAllBranches": false,
+      "pages": [
+        "dashboard",
+        "search",
+        "reports"
+      ]
+    }
+  }
 }

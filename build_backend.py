@@ -42,11 +42,18 @@ ws.sheet_view.rightToLeft = True
 row = 1
 ws.cell(row=row, column=1, value="نوع القائمة").font = Font(bold=True, name=AR_FONT)
 ws.cell(row=row, column=2, value="القيمة").font = Font(bold=True, name=AR_FONT)
+ws.cell(row=row, column=3, value="المعرّف (للفروع فقط)").font = Font(bold=True, name=AR_FONT)
+ws.cell(row=row, column=4, value="الحالة (للفروع فقط)").font = Font(bold=True, name=AR_FONT)
 row += 1
 for key, values in schema["lists"].items():
-    for v in values:
+    for i, v in enumerate(values, start=1):
         ws.cell(row=row, column=1, value=key)
         ws.cell(row=row, column=2, value=v)
+        if key == "Branches":
+            # Seed stable Branch IDs (BR-001, BR-002, ...) and default status "نشط" at build time,
+            # so a freshly generated workbook already supports Branch Management from day one.
+            ws.cell(row=row, column=3, value="BR-%03d" % i)
+            ws.cell(row=row, column=4, value="نشط")
         row += 1
 row += 2
 ws.cell(row=row, column=1, value="الأهداف الرقابية").font = Font(bold=True, name=AR_FONT, color=WHITE)
@@ -78,6 +85,15 @@ for ct in schema["control_types"]:
     ws.cell(row=r, column=1, value=ct["key"])
     ws.cell(row=r, column=2, value=0)
     r += 1
+
+# ---- الموظفون + _AuditLog — تُنشأ فارغة (بلا أي حساب افتراضي)؛ أول حساب Administrator يُنشأ
+# لاحقًا من واجهة Dashboard عبر إجراء bootstrapAdmin (يعمل مرة واحدة فقط طالما التاب فارغ) ----
+for admin_sheet in schema.get("admin_sheets", []):
+    ws = wb.create_sheet(admin_sheet["sheet"])
+    ws.sheet_view.rightToLeft = True
+    header_row(ws, admin_sheet["headers"])
+    for i in range(len(admin_sheet["headers"])):
+        ws.column_dimensions[chr(65 + i) if i < 26 else "A"].width = 18
 
 out = os.path.join(HERE, "ARRIVE_Backend.xlsx")
 wb.save(out)

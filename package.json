@@ -1,13 +1,21 @@
 {
   "name": "arrive-audit-control-tower",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "private": true,
-  "description": "ARRIVE AUDIT CONTROL TOWER — Dashboard (Google Apps Script + Google Sheets backend)",
+  "description": "ARRIVE AUDIT CONTROL TOWER — نظام التدقيق الداخلي التشغيلي لقسم التدقيق في ARRIVE (Google Apps Script + Google Sheets)",
   "scripts": {
-    "test:node": "node tests/test_harness.js",
-    "test:parity": "node tests/test_rule_parity.js",
-    "test:browser": "node tests/test_dashboard.js",
-    "test:all": "npm run test:node && npm run test:parity && npm run test:browser"
+    "test:harness": "node appsscript/test_harness.js",
+    "test:parity": "node appsscript/test_rule_parity.js",
+    "test:admin": "node appsscript/test_admin_features.js",
+    "test:security": "node appsscript/test_security_v2.js",
+    "test:migration": "node appsscript/test_migration_preview.js",
+    "test:branch-scope": "node appsscript/test_branch_scope_v3.js",
+    "test:session-ttl": "node appsscript/test_session_ttl.js",
+    "test:branch-empty-fix": "node appsscript/test_branch_empty_no_all.js",
+    "test:browser": "node dashboard/test_dashboard.js",
+    "test:browser-admin": "node dashboard/test_admin_ui.js",
+    "test:xss": "node dashboard/test_xss.js",
+    "test:all": "npm run test:harness && npm run test:parity && npm run test:admin && npm run test:security && npm run test:migration && npm run test:branch-scope && npm run test:session-ttl && npm run test:branch-empty-fix && npm run test:browser && npm run test:browser-admin && npm run test:xss"
   },
   "devDependencies": {
     "playwright": "^1.56.1"

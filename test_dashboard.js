@@ -13,7 +13,7 @@
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
-const { buildMockSpreadsheet, buildSandbox } = require('./gs_sandbox');
+const { buildMockSpreadsheet, buildSandbox } = require('../appsscript/gs_sandbox');
 
 const schema = JSON.parse(fs.readFileSync(path.join(__dirname, '../backend/schema.json'), 'utf8'));
 const codeGsSource = fs.readFileSync(path.join(__dirname, '../appsscript/Code.gs'), 'utf8');
@@ -21,11 +21,7 @@ const codeGsSource = fs.readFileSync(path.join(__dirname, '../appsscript/Code.gs
 function ctByKey(key) { return schema.control_types.find(c => c.key === key); }
 
 async function main() {
-  // NOTE (delivery-copy fix — see docs/التشغيل.md "تعديلات وُجدت وقت التجهيز"): the original file had
-  // a machine-specific executablePath here that only exists inside the Claude sandbox. Removed so
-  // Playwright resolves its own installed Chromium (after `npx playwright install chromium`), which
-  // is the portable way to launch it on any machine.
-  const browser = await chromium.launch({ args: ['--no-sandbox'] });
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
   const page = await browser.newPage();
   page.on('console', msg => { if (msg.type() === 'error') console.log('CONSOLE ERR:', msg.text()); });
   page.on('pageerror', err => console.log('PAGEERROR:', err.message));
@@ -82,7 +78,7 @@ async function main() {
   const results = [];
   function check(name, cond, detail) { results.push({ name, pass: !!cond, detail }); }
 
-  await page.goto('file://' + path.join(__dirname, '../dashboard/index.html'));
+  await page.goto('file://' + path.join(__dirname, 'index.html'));
 
   // ---- Step 1: config screen appears first (no saved localStorage) ----
   check('شاشة الإعداد تظهر أولًا', await page.isVisible('#configScreen'));

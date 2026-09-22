@@ -10,7 +10,7 @@
 const fs = require('fs');
 const { buildMockSpreadsheet, buildSandbox: buildSandboxFromSource } = require('./gs_sandbox');
 
-const schemaSrc = fs.readFileSync(__dirname + '/../appsscript/Code.gs', 'utf8');
+const schemaSrc = fs.readFileSync(__dirname + '/Code.gs', 'utf8');
 function buildSandbox(schema, mockSS) { return buildSandboxFromSource(schemaSrc, mockSS); }
 
 function runHarness() {

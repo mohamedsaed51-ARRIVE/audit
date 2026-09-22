@@ -59,6 +59,7 @@
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 50; }
   .modal { background: #fff; border-radius: 12px; padding: 20px; max-width: 560px; width: 92%; max-height: 85vh; overflow-y: auto; }
   .security-note { background: #FFF9EC; border: 1px solid #F2A600; border-radius: 10px; padding: 12px 14px; font-size: 12.5px; color: #7a5b00; }
+  #tab-settings [data-stab].active { background: var(--navy); color: #fff; }
 </style>
 </head>
 <body>
@@ -74,12 +75,37 @@
   <p id="cfgErr" class="msg err hidden"></p>
 </div>
 
+<div id="loginScreen" class="config-box card hidden">
+  <div id="loginBootstrapBox">
+    <h2 style="color:var(--navy)">🔑 إنشاء أول حساب مسؤول (Administrator)</h2>
+    <p style="font-size:13px;color:var(--gray)">لا يوجد أي حساب موظف بعد. هذا الإجراء يعمل مرة واحدة فقط لإنشاء أول حساب Administrator، ثم يُغلق تلقائيًا — إضافة بقية الحسابات تتم لاحقًا من "الإعدادات ← إدارة الموظفين".</p>
+    <label>الاسم الكامل <span class="req">*</span></label>
+    <input id="baFullName">
+    <label>اسم المستخدم <span class="req">*</span></label>
+    <input id="baUsername">
+    <label>كلمة المرور (8 أحرف على الأقل) <span class="req">*</span></label>
+    <input id="baPassword" type="password">
+    <button class="btn" style="margin-top:14px" onclick="doBootstrapAdmin()">إنشاء الحساب</button>
+  </div>
+  <div id="loginNormalBox" class="hidden">
+    <h2 style="color:var(--navy)">🔑 تسجيل الدخول</h2>
+    <label>اسم المستخدم</label>
+    <input id="loginUsername">
+    <label>كلمة المرور</label>
+    <input id="loginPassword" type="password">
+    <button class="btn" style="margin-top:14px" onclick="doLogin()">دخول</button>
+    <p style="font-size:11.5px;color:var(--gray);margin-top:10px">نسيت كلمة المرور؟ راجع مسؤول النظام لإعادة تعيينها من "الإعدادات ← إدارة الموظفين".</p>
+  </div>
+  <p id="loginErr" class="msg err hidden"></p>
+</div>
+
 <div id="appShell" class="hidden">
 <header>
   <h1>🗼 ARRIVE AUDIT CONTROL TOWER</h1>
   <div class="user-box">
     <span id="userLabel"></span>
     <span id="lastUpdateLabel"></span>
+    <button id="logoutBtn" class="btn small secondary hidden" onclick="doLogout()">🚪 تسجيل الخروج</button>
     <button class="btn small secondary" onclick="showConfig()">تغيير الاتصال</button>
   </div>
 </header>
@@ -184,17 +210,118 @@
 
   <div id="tab-settings" class="tab hidden">
     <div class="card">
-      <h2 style="color:var(--navy);margin-top:0">القوائم والأهداف (للعرض فقط من هنا)</h2>
-      <p class="status-line">لتعديل القوائم أو الأهداف افتح شيت "الإعدادات" في Google Sheets مباشرة — هذه الشاشة للعرض فقط لضمان اتساق البيانات.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn small secondary" data-stab="connection" onclick="goSettingsTab('connection')">🔌 الاتصال</button>
+        <button class="btn small secondary" data-stab="branches" onclick="goSettingsTab('branches')">🏢 إدارة الفروع</button>
+        <button class="btn small secondary" data-stab="employees" onclick="goSettingsTab('employees')">👥 إدارة الموظفين</button>
+        <button class="btn small secondary" data-stab="roles" onclick="goSettingsTab('roles')">🛡️ الأدوار والصلاحيات</button>
+        <button class="btn small secondary" data-stab="audit" onclick="goSettingsTab('audit')">📜 سجل العمليات</button>
+        <button class="btn small secondary" data-stab="general" onclick="goSettingsTab('general')">🏳️ عام</button>
+      </div>
+
+      <div id="stab-connection" class="settings-sub">
+        <h3 style="color:var(--navy)">إعدادات الاتصال</h3>
+        <p class="status-line">رابط Backend الحالي: <code id="connCurrentUrl"></code></p>
+        <div id="connStatusBox" class="msg info">لم يُختبر بعد في هذه الجلسة.</div>
+        <button class="btn small" onclick="testConnection()">اختبار الاتصال</button>
+        <button class="btn small secondary" onclick="showConfig()">تعديل الرابط</button>
+      </div>
+
+      <div id="stab-branches" class="settings-sub hidden">
+        <h3 style="color:var(--navy)">إدارة الفروع</h3>
+        <div id="branchMsg"></div>
+        <div class="filters" style="margin-bottom:10px">
+          <div><label>اسم فرع جديد</label><input id="newBranchName"></div>
+          <div style="flex:0"><button class="btn small" style="margin-top:20px" onclick="addBranchUi()">➕ إضافة فرع</button></div>
+        </div>
+        <div class="table-wrap"><table id="branchesTable"><thead><tr><th>المعرّف</th><th>الاسم</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div id="stab-employees" class="settings-sub hidden">
+        <h3 style="color:var(--navy)">إدارة الموظفين</h3>
+        <div id="empMsg"></div>
+        <div class="grid" style="margin-bottom:10px">
+          <div><label>الاسم الكامل</label><input id="newEmpFullName"></div>
+          <div><label>اسم المستخدم</label><input id="newEmpUsername"></div>
+          <div><label>كلمة المرور (8 أحرف+)</label><input id="newEmpPassword" type="password"></div>
+          <div><label>الدور</label><select id="newEmpRole" onchange="renderNewEmpBranches()">
+            <option>Administrator</option><option>Audit Manager</option><option selected>Auditor</option><option>Senior Auditor</option><option>Audit Viewer</option>
+          </select></div>
+        </div>
+        <div id="newEmpAllBranchesWrap" class="hidden" style="margin-bottom:8px">
+          <label><input type="checkbox" id="newEmpAllBranches" onchange="renderNewEmpBranches()"> منح "كل الفروع" لهذا الموظف (تفويض صريح — راجع التحذير أدناه)</label>
+        </div>
+        <div id="newEmpBranchesWrap" style="margin-bottom:10px">
+          <label id="newEmpBranchesLabel">الفروع المكلَّف بها هذا الموظف (حدّد فرعًا واحدًا على الأقل)</label>
+          <div id="newEmpBranchesBox" style="max-height:120px;overflow:auto;border:1px solid #ddd;border-radius:6px;padding:6px"></div>
+        </div>
+        <button class="btn small" onclick="addEmployeeUi()">➕ إضافة موظف</button>
+        <div class="table-wrap" style="margin-top:10px"><table id="employeesTable"><thead><tr><th>Employee ID</th><th>الاسم</th><th>اسم المستخدم</th><th>الدور</th><th>الفروع</th><th>الحالة</th><th>آخر دخول</th><th>إجراء</th></tr></thead><tbody></tbody></table></div>
+
+        <div id="empEditBox" class="card hidden" style="margin-top:14px">
+          <h4 style="color:var(--navy);margin-top:0">✏️ تعديل موظف: <span id="empEditName"></span></h4>
+          <p id="empEditSelfNote" class="msg info hidden" style="font-size:12.5px">لا يمكنك تعديل دورك أو نطاق فروعك الخاص من هنا — يلزم مسؤول آخر.</p>
+          <div class="grid">
+            <div><label>الدور</label><select id="empEditRole" onchange="renderEmpEditBranches()">
+              <option>Administrator</option><option>Audit Manager</option><option>Auditor</option><option>Senior Auditor</option><option>Audit Viewer</option>
+            </select></div>
+            <div id="empEditAllBranchesWrap" class="hidden">
+              <label><input type="checkbox" id="empEditAllBranches" onchange="renderEmpEditBranches()"> منح "كل الفروع" لهذا الموظف (تفويض صريح)</label>
+            </div>
+            <div id="empEditBranchesWrap"><label id="empEditBranchesLabel">الفروع المكلَّف بها (حدّد فرعًا واحدًا على الأقل)</label>
+              <div id="empEditBranchesBox" style="max-height:120px;overflow:auto;border:1px solid #ddd;border-radius:6px;padding:6px"></div>
+            </div>
+          </div>
+          <button class="btn small" onclick="saveEmployeeRoleUi()">💾 حفظ الدور والفروع</button>
+          <hr style="margin:14px 0">
+          <label>كلمة مرور جديدة (اتركها فارغة لعدم التغيير)</label>
+          <input id="empEditPassword" type="password" placeholder="8 أحرف على الأقل">
+          <button class="btn small secondary" onclick="saveEmployeePasswordUi()">🔑 تغيير كلمة المرور فقط</button>
+          <button class="btn small secondary" onclick="closeEmployeeEdit()" style="margin-inline-start:8px">إغلاق</button>
+        </div>
+      </div>
+
+      <div id="stab-roles" class="settings-sub hidden">
+        <h3 style="color:var(--navy)">الأدوار والصلاحيات</h3>
+        <p class="status-line">هذا عرض توضيحي فقط — الفرض الفعلي للصلاحيات يتم داخل appsscript/Code.gs على الخادم، وليس بإخفاء أزرار الواجهة.</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>الدور</th><th>الحفظ/التعديل</th><th>إدارة الفروع</th><th>إدارة الموظفين</th><th>سجل العمليات</th><th>نطاق الفروع</th></tr></thead>
+          <tbody>
+            <tr><td>Administrator</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>كل الفروع (صلاحية إدارية ثابتة لإدارة النظام)</td></tr>
+            <tr><td>Audit Manager</td><td>✅</td><td>—</td><td>—</td><td>✅</td><td>الفروع المكلَّف بها، أو كل الفروع فقط عند منحها صراحةً لهذا الموظف بعينه</td></tr>
+            <tr><td>Senior Auditor</td><td>✅ (+تقارير/سجل عمليات فرعه)</td><td>—</td><td>—</td><td>✅ (فرعه فقط)</td><td>الفروع المكلَّف بها فقط — لا يحصل على كل الفروع تلقائيًا</td></tr>
+            <tr><td>Auditor</td><td>✅</td><td>—</td><td>—</td><td>—</td><td>الفروع المكلَّف بها فقط — لا يحصل على كل الفروع تلقائيًا</td></tr>
+            <tr><td>Audit Viewer</td><td>—</td><td>—</td><td>—</td><td>—</td><td>الفروع المكلَّف بها فقط (عرض) — لا يمكن منحه كل الفروع إطلاقًا (قرار إداري)</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div id="stab-audit" class="settings-sub hidden">
+        <h3 style="color:var(--navy)">سجل العمليات (Audit Log)</h3>
+        <div id="auditMsg"></div>
+        <div class="table-wrap"><table id="auditTable"><thead><tr><th>الوقت</th><th>المستخدم</th><th>العملية</th><th>النتيجة</th><th>التفاصيل</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div id="stab-general" class="settings-sub hidden">
+        <h3 style="color:var(--navy)">إعدادات عامة</h3>
+        <ul>
+          <li>اسم الشركة: ARRIVE</li>
+          <li>اسم النظام: ARRIVE AUDIT CONTROL TOWER</li>
+          <li>اللغة: العربية (RTL)</li>
+          <li>المنطقة الزمنية: Africa/Cairo</li>
+        </ul>
+        <p class="status-line">هذه القيم ثابتة في هذه النسخة (غير قابلة للتعديل من الواجهة) — لتغييرها فعليًا يلزم تعديل appsscript/Code.gs، وهو تغيير خارج نطاق هذه الجولة.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="color:var(--navy);margin-top:0">القوائم والأهداف الكاملة (للعرض فقط)</h2>
       <div id="settingsView"></div>
     </div>
+
     <div class="card">
       <h2 style="color:var(--navy);margin-top:0">🔒 حدود الأمان الحالية — بصراحة</h2>
-      <div class="security-note">
-        اسم المستخدم المُدخَل هنا نص حر يُسجَّل مع كل عملية للتتبّع فقط — وهذا <b>ليس</b> نظام صلاحيات أو تسجيل دخول حقيقيًا؛ لا يمنع أي شخص لديه رابط الـ Dashboard من الدخول أو من كتابة أي اسم.
-        لا تُشارك رابط Google Sheet نفسه مع المستخدمين العاديين — شارك رابط هذا الـ Dashboard فقط، وأبقِ صلاحية تعديل الـ Sheet مقصورة على مدير النظام.
-        إذا احتجت دخولًا حقيقيًا بصلاحيات (من يرى ماذا، من يعدّل ماذا) فهذا يتطلب Google Workspace مع التحقق من هوية المستخدم داخل Apps Script (Session.getActiveUser)، وهو تغيير إضافي غير منفَّذ في هذه النسخة.
-      </div>
+      <div id="securityNoteBox" class="security-note"></div>
     </div>
   </div>
 
@@ -226,6 +353,20 @@
 let API_URL = localStorage.getItem('arrive_api_url') || '';
 let USER_NAME = localStorage.getItem('arrive_user') || '';
 let BOOT = null;
+
+/** يهرب أي نص قبل إدراجه داخل innerHTML — يُطبَّق على كل قيمة قد تحتوي نصًّا حرًّا أدخله مستخدم
+ * (ملاحظات، أسماء فروع/موظفين، رسائل الخادم التي قد تُضمِّن نصًّا مُرسَلًا) قبل إدراجها في DOM، بدلًا
+ * من الاعتماد على textContent فقط (مطلوب هنا لأن القوالب تبني جداول HTML كاملة كنص واحد). قيمة undefined
+ * أو null تتحوّل لسلسلة فارغة بدل السلسلة الحرفية "undefined". */
+function escapeHtml(v) {
+  if (v === null || v === undefined) return '';
+  return String(v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 let selectedType = null;
 let currentClientRequestId = null;
 let searchState = { page: 1, pageSize: 25 };
@@ -264,6 +405,9 @@ async function api(action, params) {
     const url = new URL(API_URL);
     url.searchParams.set('action', action);
     Object.entries(params || {}).forEach(([k, v]) => v !== undefined && v !== '' && v !== null && url.searchParams.set(k, v));
+    // يُرفَق Token الجلسة الحالية (إن وُجد) بكل طلب GET أيضًا — نفس آلية apiPost تمامًا، مطلوب
+    // لأن الخادم يرفض الآن قراءة kpis/search/getRecord/reports بلا Token صالح متى auth_enabled=1.
+    if (typeof AUTH_TOKEN !== 'undefined' && AUTH_TOKEN) url.searchParams.set('token', AUTH_TOKEN);
     const res = await fetch(url.toString());
     if (!res.ok) return { ok: false, error: 'رد غير متوقع من الخادم (HTTP ' + res.status + ').' };
     let json;
@@ -275,6 +419,9 @@ async function api(action, params) {
 }
 async function apiPost(body) {
   try {
+    // يُرفَق Token الجلسة الحالية تلقائيًا (إن وُجد) بكل طلب POST، دون الحاجة لذكره في كل مكان
+    // يُستدعى منه apiPost — النظام معطَّل تمامًا افتراضيًا (auth_enabled=0) فلا يتغيّر أي سلوك حالي.
+    if (typeof AUTH_TOKEN !== 'undefined' && AUTH_TOKEN && !body.token) body = Object.assign({ token: AUTH_TOKEN }, body);
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(body) });
     if (!res.ok) return { ok: false, error: 'رد غير متوقع من الخادم (HTTP ' + res.status + ').' };
     let json;
@@ -306,9 +453,67 @@ async function init() {
   localStorage.setItem('arrive_api_url', API_URL);
   localStorage.setItem('arrive_user', USER_NAME);
   BOOT = boot;
+
+  // نظام تسجيل الدخول (اختياري بالكامل — auth_enabled من تاب "الإعدادات"، الافتراضي معطَّل).
+  // الـ Token يُحفظ في الذاكرة فقط (متغيّر JS)، وليس في localStorage — إعادة تحميل الصفحة تتطلب
+  // إعادة تسجيل الدخول أثناء تفعيل هذا النظام؛ هذا مقصود، وليس خللًا.
+  if (boot.authEnabled && !AUTH_TOKEN) {
+    document.getElementById('appShell').classList.add('hidden');
+    document.getElementById('configScreen').classList.add('hidden');
+    showLogin(boot.employeesBootstrapNeeded);
+    return;
+  }
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('configScreen').classList.add('hidden');
+  document.getElementById('appShell').classList.remove('hidden');
+  document.getElementById('logoutBtn').classList.toggle('hidden', !boot.authEnabled);
   renderTypeCards();
   populateAllFilterDropdowns();
   go('home');
+}
+
+/* ---------------- تسجيل الدخول (Apps Script-native: SHA-256+Salt، Token عبر CacheService) ---------------- */
+let AUTH_TOKEN = null, CURRENT_ROLE = null, CURRENT_BRANCHES = null, CURRENT_FULLNAME = null, CURRENT_EMPLOYEE_ID = null;
+
+function showLogin(bootstrapNeeded) {
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('loginBootstrapBox').classList.toggle('hidden', !bootstrapNeeded);
+  document.getElementById('loginNormalBox').classList.toggle('hidden', !!bootstrapNeeded);
+}
+
+async function doBootstrapAdmin() {
+  const fullName = document.getElementById('baFullName').value.trim();
+  const username = document.getElementById('baUsername').value.trim();
+  const password = document.getElementById('baPassword').value;
+  const err = document.getElementById('loginErr');
+  err.classList.add('hidden');
+  if (!fullName || !username || !password) { err.textContent = 'كل الحقول إلزامية.'; err.classList.remove('hidden'); return; }
+  const r = await apiPost({ action: 'bootstrapAdmin', fullName, username, password });
+  if (!r.ok) { err.textContent = r.error; err.classList.remove('hidden'); return; }
+  alert(r.message);
+  showLogin(false);
+}
+
+async function doLogin() {
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const err = document.getElementById('loginErr');
+  err.classList.add('hidden');
+  if (!username || !password) { err.textContent = 'الرجاء إدخال اسم المستخدم وكلمة المرور.'; err.classList.remove('hidden'); return; }
+  const r = await apiPost({ action: 'login', username, password });
+  if (!r.ok) { err.textContent = r.error; err.classList.remove('hidden'); return; }
+  AUTH_TOKEN = r.token; CURRENT_ROLE = r.role; CURRENT_BRANCHES = r.branches; CURRENT_FULLNAME = r.fullName; CURRENT_EMPLOYEE_ID = r.employeeId;
+  USER_NAME = r.fullName; localStorage.setItem('arrive_user', USER_NAME);
+  document.getElementById('userLabel').textContent = '👤 ' + USER_NAME + ' — ' + CURRENT_ROLE;
+  document.getElementById('homeUser').textContent = USER_NAME;
+  init();
+}
+
+async function doLogout() {
+  if (AUTH_TOKEN) await apiPost({ action: 'logout', token: AUTH_TOKEN });
+  AUTH_TOKEN = null; CURRENT_ROLE = null; CURRENT_BRANCHES = null; CURRENT_EMPLOYEE_ID = null;
+  document.getElementById('appShell').classList.add('hidden');
+  init();
 }
 
 function unionListsFor(kind) {
@@ -323,7 +528,7 @@ function unionListsFor(kind) {
 function fillSelect(id, values, keep) {
   const el = document.getElementById(id);
   const cur = el.value;
-  el.innerHTML = '<option value="">الكل</option>' + values.map(v => `<option value="${v}">${v}</option>`).join('');
+  el.innerHTML = '<option value="">الكل</option>' + values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
   if (keep && values.includes(cur)) el.value = cur;
 }
 
@@ -527,9 +732,11 @@ async function runSearch(page) {
     const closeDate = rec['تاريخ الإغلاق'] || '—';
     const compliance = COMPLIANCE_LABEL[r.type] ? (rec[COMPLIANCE_LABEL[r.type]] || '—') : '—';
     const recId = rec['رقم السجل'];
+    // كل قيمة هنا قد تكون نصًّا حرًّا أدخله مستخدم سابقًا (ملاحظة، اسم فرع، اسم مسؤول) — تُهرَّب دومًا
+    // قبل إدراجها في innerHTML لمنع تنفيذ أي HTML/JS مضمَّن فيها (راجع تقرير المخاطر الأمنية).
     html += `<tr>
-      <td>${r.typeName}</td><td>${recId}</td><td>${rec['تاريخ الإدخال']||''}</td><td>${rec['المستخدم (مُدخل السجل)']||''}</td>
-      <td>${branch}</td><td>${refCol}</td><td>${status}</td><td>${owner}</td><td>${closeDate}</td><td>${compliance}</td>
+      <td>${escapeHtml(r.typeName)}</td><td>${escapeHtml(recId)}</td><td>${escapeHtml(rec['تاريخ الإدخال'])}</td><td>${escapeHtml(rec['المستخدم (مُدخل السجل)'])}</td>
+      <td>${escapeHtml(branch)}</td><td>${escapeHtml(refCol)}</td><td>${escapeHtml(status)}</td><td>${escapeHtml(owner)}</td><td>${escapeHtml(closeDate)}</td><td>${escapeHtml(compliance)}</td>
       <td><button class="btn small secondary" onclick='openDetail(${JSON.stringify(r.type)}, ${JSON.stringify(recId)})'>تفاصيل</button></td>
       <td><button class="btn small" onclick='openEdit(${JSON.stringify(r.type)}, ${JSON.stringify(recId)})'>تعديل</button></td>
     </tr>`;
@@ -550,9 +757,9 @@ function renderPager(res) {
 async function openDetail(type, id) {
   const res = await api('getRecord', { type, id });
   const body = document.getElementById('detailBody');
-  if (!res.ok) { body.innerHTML = `<div class="msg err">${res.error}</div>`; }
+  if (!res.ok) { body.innerHTML = `<div class="msg err">${escapeHtml(res.error)}</div>`; }
   else {
-    body.innerHTML = '<table>' + Object.entries(res.record).map(([k,v]) => `<tr><th>${k}</th><td>${v===''?'—':v}</td></tr>`).join('') + '</table>';
+    body.innerHTML = '<table>' + Object.entries(res.record).map(([k,v]) => `<tr><th>${escapeHtml(k)}</th><td>${v===''?'—':escapeHtml(v)}</td></tr>`).join('') + '</table>';
   }
   document.getElementById('detailModalBg').classList.remove('hidden');
 }
@@ -699,7 +906,7 @@ async function loadReports() {
     comparePrev: document.getElementById('rCompare').checked ? '1' : '0',
   };
   const res = await api('reports', params);
-  if (!res.ok) { body.innerHTML = `<div class="card msg err">${res.error}</div>`; return; }
+  if (!res.ok) { body.innerHTML = `<div class="card msg err">${escapeHtml(res.error)}</div>`; return; }
   const c = res.current;
   let html = '';
   html += `<div class="card">
@@ -767,14 +974,226 @@ function loadSettingsView() {
   Object.entries(BOOT.targets).forEach(([k,v]) => html += `<li>${k}: ${v}</li>`);
   html += '</ul>';
   document.getElementById('settingsView').innerHTML = html;
+
+  document.getElementById('securityNoteBox').innerHTML = BOOT.authEnabled
+    ? 'نظام تسجيل الدخول <b>مفعَّل</b> حاليًا: كلمات المرور تُخزَّن كـ SHA-256 + Salt عشوائي لكل حساب (وليست bcrypt/Argon2 القياسي) — مناسب لأداة داخلية بعدد موظفين محدود، وليس بمستوى أمان بنكي. الصلاحيات تُفرض داخل appsscript/Code.gs على الخادم فعليًا، وليس بإخفاء أزرار الواجهة فقط. الجلسة (Token) صالحة 6 ساعات (21600 ثانية — الحد الأقصى المدعوم فعليًا من CacheService في Google Apps Script) ولا تُحفظ في localStorage، وقد تنتهي قبل ذلك إذا أُفرِغ الكاش لأي سبب — إعادة تحميل الصفحة تتطلب تسجيل دخول جديد.'
+    : 'نظام تسجيل الدخول <b>معطَّل</b> حاليًا (auth_enabled=0 في تاب "الإعدادات"): اسم المستخدم نص حر يُسجَّل للتتبّع فقط، وأي شخص لديه رابط الـ Dashboard يمكنه الدخول والكتابة. لتفعيل حسابات حقيقية بصلاحيات، فعّل auth_enabled من الشيت بعد إنشاء حساب Administrator أول من هذه الشاشة.';
+
+  goSettingsTab('connection');
+}
+
+function goSettingsTab(name) {
+  document.querySelectorAll('#tab-settings .settings-sub').forEach(el => el.classList.add('hidden'));
+  document.getElementById('stab-' + name).classList.remove('hidden');
+  document.querySelectorAll('#tab-settings [data-stab]').forEach(b => b.classList.toggle('active', b.dataset.stab === name));
+  if (name === 'connection') {
+    document.getElementById('connCurrentUrl').textContent = API_URL || '(غير مضبوط)';
+  } else if (name === 'branches') loadBranches();
+  else if (name === 'employees') loadEmployees();
+  else if (name === 'audit') loadAuditLog();
+}
+
+async function testConnection() {
+  const box = document.getElementById('connStatusBox');
+  box.className = 'msg info'; box.textContent = 'جارٍ الاختبار...';
+  if (!API_URL) { box.className = 'msg err'; box.textContent = '❌ لم يتم ضبط الرابط بعد.'; return; }
+  const r = await api('bootstrap');
+  if (r.ok) { box.className = 'msg ok'; box.textContent = '✅ متصل — الخادم يستجيب بشكل صحيح.'; }
+  else { box.className = 'msg err'; box.textContent = '❌ غير متصل / الرابط غير صحيح: ' + r.error; }
+}
+
+/* ---------------- إدارة الفروع ---------------- */
+async function loadBranches() {
+  const r = await apiPost({ action: 'listBranches' });
+  const tbody = document.querySelector('#branchesTable tbody');
+  if (!r.ok) { tbody.innerHTML = `<tr><td colspan="4">${escapeHtml(r.error)}</td></tr>`; return; }
+  // اسم الفرع نص حرّ أدخله مستخدم (Administrator) — لا يُدرَج داخل onclick مباشرة (كسر محتمل لخاصية
+  // HTML لو تضمَّن علامة تنصيص) بل عبر data-* مُهرَّبة، ثم Event Listeners فعلية بعد بناء الجدول.
+  tbody.innerHTML = r.branches.map(b => `
+    <tr>
+      <td>${escapeHtml(b.id || '—')}</td>
+      <td>${escapeHtml(b.name)}</td>
+      <td>${b.active ? '<span style="color:var(--green)">نشط</span>' : '<span style="color:var(--red)">معطل</span>'}</td>
+      <td>
+        <button class="btn small secondary" data-act="rename" data-id="${escapeHtml(b.id)}" data-name="${escapeHtml(b.name)}">✏️ إعادة تسمية</button>
+        <button class="btn small secondary" data-act="toggle" data-id="${escapeHtml(b.id)}" data-activate="${!b.active}">${b.active ? '⏸️ تعطيل' : '▶️ تفعيل'}</button>
+      </td>
+    </tr>`).join('');
+  tbody.querySelectorAll('button[data-act="rename"]').forEach(btn =>
+    btn.addEventListener('click', () => renameBranchUi(btn.dataset.id, btn.dataset.name)));
+  tbody.querySelectorAll('button[data-act="toggle"]').forEach(btn =>
+    btn.addEventListener('click', () => toggleBranchUi(btn.dataset.id, btn.dataset.activate === 'true')));
+}
+async function addBranchUi() {
+  const name = document.getElementById('newBranchName').value.trim();
+  const msg = document.getElementById('branchMsg');
+  if (!name) { msg.innerHTML = '<p class="msg err">اسم الفرع إلزامي.</p>'; return; }
+  const r = await apiPost({ action: 'addBranch', name });
+  msg.innerHTML = r.ok ? `<p class="msg ok">${escapeHtml(r.message)}</p>` : `<p class="msg err">${escapeHtml(r.error)}</p>`;
+  if (r.ok) { document.getElementById('newBranchName').value = ''; loadBranches(); populateAllFilterDropdowns(); }
+}
+async function renameBranchUi(id, oldName) {
+  const name = prompt('الاسم الجديد للفرع "' + oldName + '":', oldName);
+  if (name === null || !name.trim() || name === oldName) return;
+  if (!confirm('تأكيد تعديل اسم الفرع إلى "' + name + '"؟ السجلات القديمة تبقى بالاسم السابق كما أُدخلت به.')) return;
+  const r = await apiPost({ action: 'renameBranch', id, name: name.trim() });
+  document.getElementById('branchMsg').innerHTML = r.ok ? `<p class="msg ok">${escapeHtml(r.message)}</p>` : `<p class="msg err">${escapeHtml(r.error)}</p>`;
+  if (r.ok) { loadBranches(); populateAllFilterDropdowns(); }
+}
+async function toggleBranchUi(id, activate) {
+  if (!confirm(activate ? 'تأكيد إعادة تفعيل هذا الفرع؟' : 'تأكيد تعطيل هذا الفرع؟ لن يظهر في السجلات الجديدة، والسجلات القديمة لا تتأثر.')) return;
+  const r = await apiPost({ action: 'toggleBranch', id, active: activate });
+  document.getElementById('branchMsg').innerHTML = r.ok ? `<p class="msg ok">${escapeHtml(r.message)}</p>` : `<p class="msg err">${escapeHtml(r.error)}</p>`;
+  if (r.ok) { loadBranches(); populateAllFilterDropdowns(); }
+}
+
+/* ---------------- إدارة الموظفين ---------------- */
+let EMP_CACHE = [], BRANCHES_CACHE = [];
+async function loadEmployees() {
+  const [r, br] = await Promise.all([apiPost({ action: 'listEmployees' }), apiPost({ action: 'listBranches' })]);
+  BRANCHES_CACHE = br.ok ? br.branches : [];
+  const tbody = document.querySelector('#employeesTable tbody');
+  if (!r.ok) { tbody.innerHTML = `<tr><td colspan="8">${escapeHtml(r.error)}</td></tr>`; return; }
+  EMP_CACHE = r.employees;
+  // الاسم الكامل واسم المستخدم نصّان حرّان أدخلهما مسؤول عند إنشاء الحساب — يُهرَّبان دومًا هنا.
+  tbody.innerHTML = r.employees.map(e => {
+    // مصفوفة فروع فارغة تعني صراحة "لا فروع مخصَّصة إطلاقًا" (لا يُفسَّر ذلك أبدًا كـ"كل الفروع") —
+    // غالبًا ناتجة عن تعديل يدوي مباشر في شيت الموظفين تجاوز الواجهة والـ Backend. الموظف بهذه الحالة
+    // مرفوض الوصول لأي بيانات فروع من الخادم فعليًا (راجع _rowMatchesFilters/_checkBranchScope)، لذا
+    // نعرض تحذيرًا صريحًا هنا بدل شرطة عامة "—" كي يلاحظها المسؤول ويصحّح التكليف.
+    const noBranchesAssigned = e.branches !== 'ALL' && (!e.branches || !e.branches.length);
+    const branchesLabel = e.branches === 'ALL' ? 'كل الفروع'
+      : noBranchesAssigned ? '⚠️ لا فروع مخصَّصة — يحتاج مراجعة إدارية'
+      : (e.branches || []).map(id => (BRANCHES_CACHE.find(b => b.id === id) || {}).name || id).join('، ');
+    return `<tr>
+      <td>${escapeHtml(e.id)}</td><td>${escapeHtml(e.fullName)}</td><td>${escapeHtml(e.username)}</td><td>${escapeHtml(e.role)}</td>
+      <td${noBranchesAssigned ? ' style="color:var(--red)"' : ''}>${escapeHtml(branchesLabel)}</td>
+      <td>${e.status === 'نشط' ? '<span style="color:var(--green)">نشط</span>' : '<span style="color:var(--red)">معطل</span>'}</td>
+      <td>${escapeHtml(e.lastLogin || '—')}</td>
+      <td>
+        <button class="btn small secondary" data-act="edit" data-id="${escapeHtml(e.id)}">✏️ تعديل</button>
+        <button class="btn small secondary" data-act="toggle" data-id="${escapeHtml(e.id)}" data-activate="${e.status !== 'نشط'}">${e.status === 'نشط' ? '⏸️ تعطيل' : '▶️ تفعيل'}</button>
+      </td>
+    </tr>`;
+  }).join('');
+  tbody.querySelectorAll('button[data-act="edit"]').forEach(btn =>
+    btn.addEventListener('click', () => openEmployeeEdit(btn.dataset.id)));
+  tbody.querySelectorAll('button[data-act="toggle"]').forEach(btn =>
+    btn.addEventListener('click', () => toggleEmployeeUi(btn.dataset.id, btn.dataset.activate === 'true')));
+  renderNewEmpBranches();
+}
+
+/** لوحة تعديل موظف — الدور/الفروع منفصلان عن تغيير كلمة المرور عمدًا (تأكيد مختلف لكل عملية حسّاسة).
+ * تُعطَّل حقول الدور/الفروع تمامًا لو كان الموظف المفتوح هو المستخدم الحالي نفسه (دفاع إضافي في
+ * الواجهة فوق الرفض الحقيقي المطبَّق أصلًا داخل Backend في _actionUpdateEmployee). */
+function openEmployeeEdit(id) {
+  const e = EMP_CACHE.find(x => x.id === id);
+  if (!e) return;
+  const isSelf = CURRENT_EMPLOYEE_ID && id === CURRENT_EMPLOYEE_ID;
+  document.getElementById('empEditBox').classList.remove('hidden');
+  document.getElementById('empEditBox').dataset.editingId = id;
+  document.getElementById('empEditName').textContent = e.fullName + ' (' + e.username + ')';
+  document.getElementById('empEditSelfNote').classList.toggle('hidden', !isSelf);
+  const roleSel = document.getElementById('empEditRole');
+  roleSel.value = e.role; roleSel.disabled = isSelf;
+  document.getElementById('empEditAllBranches').checked = (e.branches === 'ALL');
+  document.getElementById('empEditAllBranches').disabled = isSelf;
+  renderEmpEditBranches(e.branches);
+  document.querySelector('#empEditBox button[onclick="saveEmployeeRoleUi()"]').disabled = isSelf;
+}
+function closeEmployeeEdit() { document.getElementById('empEditBox').classList.add('hidden'); }
+/** يعرض قائمة اختيار الفروع في نموذج "تعديل موظف" — لا يُخفي القائمة أبدًا حتى للأدوار المسموح لها
+ * بكل الفروع (canBeAssignedAllBranches)؛ بدلًا من ذلك يظهر Checkbox صريح منفصل "منح كل الفروع"، ولا
+ * يصبح ذلك نافذًا إلا بتفعيله يدويًا — لا يوجد أي قيمة افتراضية تلقائية لكل الفروع. */
+function renderEmpEditBranches(currentBranches) {
+  const role = document.getElementById('empEditRole').value;
+  const canAll = BOOT.rolePermissions && BOOT.rolePermissions[role] && BOOT.rolePermissions[role].canBeAssignedAllBranches;
+  document.getElementById('empEditAllBranchesWrap').classList.toggle('hidden', !canAll);
+  const allChecked = canAll && document.getElementById('empEditAllBranches').checked;
+  document.getElementById('empEditBranchesWrap').style.display = allChecked ? 'none' : 'block';
+  const box = document.getElementById('empEditBranchesBox');
+  const cur = currentBranches === 'ALL' ? [] : (currentBranches || []);
+  box.innerHTML = BRANCHES_CACHE.filter(b => b.active || cur.includes(b.id)).map(b =>
+    `<label style="display:block"><input type="checkbox" value="${escapeHtml(b.id)}" ${cur.includes(b.id) ? 'checked' : ''}> ${escapeHtml(b.name)}</label>`).join('') || '<em>لا توجد فروع بعد.</em>';
+}
+async function saveEmployeeRoleUi() {
+  const id = document.getElementById('empEditBox').dataset.editingId;
+  const role = document.getElementById('empEditRole').value;
+  const canAll = BOOT.rolePermissions && BOOT.rolePermissions[role] && BOOT.rolePermissions[role].canBeAssignedAllBranches;
+  const wantsAll = canAll && document.getElementById('empEditAllBranches').checked;
+  const branches = Array.from(document.querySelectorAll('#empEditBranchesBox input:checked')).map(i => i.value);
+  const msg = document.getElementById('empMsg');
+  if (!wantsAll && !branches.length) { msg.innerHTML = '<p class="msg err">حدّد فرعًا واحدًا على الأقل، أو فعِّل "منح كل الفروع" إن كان الدور يسمح بذلك.</p>'; return; }
+  // تحذير إضافي إلزامي قبل حفظ "كل الفروع" — تفويض واسع يجب أن يكون واعيًا ومقصودًا، وليس نقرة عابرة.
+  if (wantsAll && !confirm('أنت على وشك منح هذا الموظف صلاحية الوصول إلى كل الفروع بلا استثناء. هل تؤكد هذا التفويض الصريح؟')) return;
+  const r = await apiPost({ action: 'updateEmployee', id, data: { role, branches: wantsAll ? 'ALL' : branches } });
+  msg.innerHTML = r.ok ? `<p class="msg ok">${escapeHtml(r.message)}</p>` : `<p class="msg err">${escapeHtml(r.error)}</p>`;
+  if (r.ok) { closeEmployeeEdit(); loadEmployees(); }
+}
+async function saveEmployeePasswordUi() {
+  const id = document.getElementById('empEditBox').dataset.editingId;
+  const password = document.getElementById('empEditPassword').value;
+  if (!password) { document.getElementById('empMsg').innerHTML = '<p class="msg err">أدخل كلمة مرور جديدة أولًا.</p>'; return; }
+  if (password.length < 8) { document.getElementById('empMsg').innerHTML = '<p class="msg err">كلمة المرور يجب ألا تقل عن 8 أحرف.</p>'; return; }
+  if (!confirm('تأكيد تغيير كلمة مرور هذا الحساب؟')) return;
+  const r = await apiPost({ action: 'updateEmployee', id, data: { password } });
+  document.getElementById('empMsg').innerHTML = r.ok ? `<p class="msg ok">${escapeHtml(r.message)}</p>` : `<p class="msg err">${escapeHtml(r.error)}</p>`;
+  if (r.ok) document.getElementById('empEditPassword').value = '';
+}
+/** يعرض قائمة اختيار الفروع في نموذج "إضافة موظف" دومًا — لا تُخفى أبدًا لمجرد أن الدور يملك
+ * canBeAssignedAllBranches؛ بدلًا من ذلك يظهر Checkbox صريح منفصل "منح كل الفروع" فقط للأدوار
+ * المصرَّح لها بذلك (مشتقة من BOOT.rolePermissions)، ولا قيمة افتراضية لكل الفروع أبدًا — أي اختيار
+ * "كل الفروع" فعل واعٍ ومقصود من المسؤول، وليس نتيجة ترك الحقل فارغًا سهوًا. */
+function renderNewEmpBranches() {
+  const role = document.getElementById('newEmpRole').value;
+  const canAll = BOOT.rolePermissions && BOOT.rolePermissions[role] && BOOT.rolePermissions[role].canBeAssignedAllBranches;
+  document.getElementById('newEmpAllBranchesWrap').classList.toggle('hidden', !canAll);
+  if (!canAll) document.getElementById('newEmpAllBranches').checked = false;
+  const wantsAll = canAll && document.getElementById('newEmpAllBranches').checked;
+  document.getElementById('newEmpBranchesWrap').style.display = wantsAll ? 'none' : 'block';
+  const box = document.getElementById('newEmpBranchesBox');
+  box.innerHTML = BRANCHES_CACHE.filter(b => b.active).map(b =>
+    `<label style="display:block"><input type="checkbox" value="${escapeHtml(b.id)}"> ${escapeHtml(b.name)}</label>`).join('') || '<em>لا توجد فروع بعد — أضِف فرعًا أولًا.</em>';
+}
+async function addEmployeeUi() {
+  const fullName = document.getElementById('newEmpFullName').value.trim();
+  const username = document.getElementById('newEmpUsername').value.trim();
+  const password = document.getElementById('newEmpPassword').value;
+  const role = document.getElementById('newEmpRole').value;
+  const canAll = BOOT.rolePermissions && BOOT.rolePermissions[role] && BOOT.rolePermissions[role].canBeAssignedAllBranches;
+  const wantsAll = canAll && document.getElementById('newEmpAllBranches').checked;
+  const branches = Array.from(document.querySelectorAll('#newEmpBranchesBox input:checked')).map(i => i.value);
+  const msg = document.getElementById('empMsg');
+  if (!fullName || !username || !password) { msg.innerHTML = '<p class="msg err">الاسم الكامل واسم المستخدم وكلمة المرور إلزامية.</p>'; return; }
+  if (!wantsAll && !branches.length) { msg.innerHTML = '<p class="msg err">حدّد فرعًا واحدًا على الأقل، أو فعِّل "منح كل الفروع" إن كان الدور يسمح بذلك.</p>'; return; }
+  if (wantsAll && !confirm('أنت على وشك منح هذا الموظف الجديد صلاحية الوصول إلى كل الفروع بلا استثناء. هل تؤكد هذا التفويض الصريح؟')) return;
+  const r = await apiPost({ action: 'addEmployee', data: { fullName, username, password, role, branches: wantsAll ? 'ALL' : branches } });
+  msg.innerHTML = r.ok ? `<p class="msg ok">${escapeHtml(r.message)}</p>` : `<p class="msg err">${escapeHtml(r.error)}</p>`;
+  if (r.ok) { document.getElementById('newEmpFullName').value = ''; document.getElementById('newEmpUsername').value = ''; document.getElementById('newEmpPassword').value = ''; document.getElementById('newEmpAllBranches').checked = false; loadEmployees(); renderNewEmpBranches(); }
+}
+async function toggleEmployeeUi(id, activate) {
+  if (!confirm(activate ? 'تأكيد إعادة تفعيل هذا الحساب؟' : 'تأكيد تعطيل هذا الحساب؟')) return;
+  const r = await apiPost({ action: 'toggleEmployee', id, active: activate });
+  document.getElementById('empMsg').innerHTML = r.ok ? `<p class="msg ok">${escapeHtml(r.message)}</p>` : `<p class="msg err">${escapeHtml(r.error)}</p>`;
+  if (r.ok) loadEmployees();
+}
+
+/* ---------------- سجل العمليات ---------------- */
+async function loadAuditLog() {
+  const r = await apiPost({ action: 'auditLog' });
+  const tbody = document.querySelector('#auditTable tbody');
+  const msg = document.getElementById('auditMsg');
+  if (!r.ok) { msg.innerHTML = `<p class="msg err">${escapeHtml(r.error)}</p>`; tbody.innerHTML = ''; return; }
+  msg.innerHTML = '';
+  // username/details قد يتضمَّنان نصًّا حرًّا (اسم مستخدم، تفاصيل عملية تضمِّن اسم فرع/سجل) — تُهرَّب دومًا.
+  tbody.innerHTML = r.entries.map(e => `<tr><td>${escapeHtml(e.at)}</td><td>${escapeHtml(e.username)}</td><td>${escapeHtml(e.action)}</td><td>${escapeHtml(e.result)}</td><td>${escapeHtml(e.details || '')}</td></tr>`).join('') || '<tr><td colspan="5">لا سجلات بعد.</td></tr>';
 }
 
 // ---- boot ----
 if (API_URL && USER_NAME) {
-  document.getElementById('appShell').classList.remove('hidden');
   document.getElementById('userLabel').textContent = '👤 ' + USER_NAME;
   document.getElementById('homeUser').textContent = USER_NAME;
-  init();
+  init(); // init() itself decides: app shell directly, or the login screen first, per boot.authEnabled
 } else {
   showConfig();
 }
