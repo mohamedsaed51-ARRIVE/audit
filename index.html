@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ARRIVE AUDIT CONTROL TOWER</title>
+<!-- Minimal inline favicon added only for static-hosting hygiene (avoids the browser's automatic
+     /favicon.ico 404 request on GitHub Pages). No visual/design/business-logic change. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='16' fill='%231B2A4A'/%3E%3Ctext x='50' y='68' font-size='60' text-anchor='middle' fill='%23FF6B35' font-family='Arial, sans-serif'%3EA%3C/text%3E%3C/svg%3E">
 <style>
   :root {
     --navy: #1B2A4A; --orange: #FF6B35; --green: #1E8E3E; --red: #D93025;
@@ -32,6 +35,14 @@
   .type-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap: 10px; }
   .type-card { border: 2px solid #dde2ea; border-radius: 12px; padding: 16px 8px; text-align: center; cursor: pointer; font-weight: 600; color: var(--navy); font-size: 13.5px; }
   .type-card:hover, .type-card.sel { border-color: var(--orange); background: #FFF6F0; }
+  .branch-chip-row { display: flex; flex-wrap: wrap; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; -webkit-overflow-scrolling: touch; }
+  .branch-chip { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid #ccd3de; border-radius: 20px; padding: 7px 14px; font-size: 12.5px; font-weight: 600; color: var(--navy); cursor: pointer; white-space: nowrap; background: #fff; }
+  .branch-chip input { width: auto; margin: 0; }
+  .branch-chip:has(input:checked) { border-color: var(--orange); background: #FFF6F0; }
+  .branch-card { border: 2px solid #dde2ea; margin-bottom: 12px; }
+  .branch-card h4 { display: flex; align-items: center; justify-content: space-between; }
+  .batch-summary { background: #F0F2F6; border-radius: 10px; padding: 10px 14px; font-size: 12.5px; margin: 10px 0; }
+  .diff-negative { color: var(--red); font-weight: 700; }
   label { display: block; font-size: 12.5px; font-weight: 600; margin: 8px 0 4px; color: var(--navy); }
   label .req { color: var(--red); }
   input, select, textarea { width: 100%; padding: 7px 9px; border: 1px solid #ccd3de; border-radius: 8px; font-family: inherit; font-size: 13.5px; }
@@ -200,6 +211,11 @@
         <div><label>إلى تاريخ</label><input type="date" id="rDateTo"></div>
         <div><label>الفرع</label><select id="rBranch"><option value="">الكل</option></select></div>
         <div><label>نوع الرقابة</label><select id="rType"><option value="">الكل</option></select></div>
+        <div><label>نوع المطابقة الصباحية</label><select id="rMorningType">
+          <option value="">الكل (بيك أب + مرتجعات)</option>
+          <option value="PICKUP">بيك أب فقط</option>
+          <option value="RETURNS">مرتجعات فقط</option>
+        </select></div>
         <div><label><input type="checkbox" id="rCompare" style="width:auto;display:inline-block;vertical-align:middle"> قارن بالفترة السابقة المكافئة</label></div>
         <div><button class="btn" onclick="loadReports()">📊 توليد التقرير</button></div>
       </div>
@@ -371,10 +387,46 @@ let selectedType = null;
 let currentClientRequestId = null;
 let searchState = { page: 1, pageSize: 25 };
 let editContext = null;
+// ---- حالة نموذج المطابقة الصباحية الجديدة (MorningPickup/MorningReturns) ----
+let formMode = 'generic';          // 'generic' (النموذج العام القديم) أو 'morningBatch' (الحفظ الجماعي الجديد)
+let mnCurrentType = null;          // MorningPickup أو MorningReturns فقط
+let mnSelectedBranches = [];       // أسماء الفروع المختارة حاليًا (بالترتيب الذي اختيرت به)
+let mnBatchRequestId = null;       // clientRequestId واحد لعملية الحفظ الجماعي كلها (idempotency)
+let formHasUnsavedData = false;    // حارس "لا تسمح بتغيير النوع أثناء وجود بيانات غير محفوظة دون تحذير"
 
 function uuid() {
   if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
   return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+}
+
+/** يميّز أخطاء "الجلسة غير صالحة/منتهية" تحديدًا (رسائل _requireAuth الثلاث المعروفة حرفيًا في
+ * Code.gs) عن أي رفض آخر (تحقق عادي، صلاحيات، تعارض بيانات) — لا يُعامل كل ok:false كخطأ Session.
+ * ملاحظة مهمة: رسالة "يجب تسجيل الدخول بحساب صالح لتنفيذ عملية ..." التي يُصدرها _actionSave/
+ * _actionUpdate/_actionSaveMorningBatch عند auth_enabled=0 (وضع الإعداد القديم بلا تسجيل دخول
+ * إطلاقًا) مُستبعَدة عمدًا هنا: لا توجد شاشة دخول تُعرَض أصلًا في ذلك الوضع، فالتوجيه إليها خطأ. */
+function isSessionError(res) {
+  if (!res || res.ok !== false || !res.error) return false;
+  return res.error.indexOf('الجلسة غير صالحة أو منتهية') !== -1 ||
+         res.error.indexOf('الحساب لم يعد موجودًا') !== -1 ||
+         res.error.indexOf('تم تعطيل هذا الحساب') !== -1;
+}
+
+/** يوجّه المستخدم إلى شاشة تسجيل الدخول *الموجودة بالفعل* (لا نظام دخول جديد) عند انتهاء/بطلان
+ * الجلسة فعليًا، مع رسالة واضحة، دون مسح أي بيانات مُدخَلة في النماذج المفتوحة — appShell يُخفى فقط
+ * (DOM الخاص بالنموذج يبقى كما هو في الذاكرة)، ولا يُستدعى init()/renderTypeCards() هنا حتى لا تُعاد
+ * كتابة أي عنصر بشكل غير ضروري قبل أن يُقرِّر المستخدم الدخول من جديد. */
+function handleSessionExpiry(message) {
+  AUTH_TOKEN = null; CURRENT_ROLE = null; CURRENT_BRANCHES = null; CURRENT_EMPLOYEE_ID = null;
+  document.getElementById('appShell').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('loginBootstrapBox').classList.add('hidden');
+  document.getElementById('loginNormalBox').classList.remove('hidden');
+  const err = document.getElementById('loginErr');
+  // رسائل _requireAuth الثلاث تتضمن بالفعل "يرجى تسجيل الدخول مرة أخرى" — لا نُكرر هذه العبارة، فقط
+  // نضيف طمأنة صريحة بأن بيانات النموذج لن تُفقد.
+  const base = message || 'انتهت جلستك أو لم تعد صالحة — يرجى تسجيل الدخول مرة أخرى.';
+  err.textContent = base + ' البيانات التي أدخلتها في النموذج لن تُفقد وستجدها بعد الدخول.';
+  err.classList.remove('hidden');
 }
 
 function showConfig() {
@@ -549,15 +601,23 @@ function populateAllFilterDropdowns() {
 }
 function onSearchTypeChange() { /* reserved: could narrow branch/status lists per type later */ }
 
+// UI-DISPLAY-ONLY FILTER (طلب صريح: "DASHBOARD UI FIX — REMOVE LEGACY MORNING CONTROLS"، ثم مُزامَن هنا
+// في PREVIEW عبر "FINAL PREVIEW SYNC — TASK G"): يخفي بطاقتي "المطابقة الصباحية"/"مطابقة المرتجعات"
+// القديمتين (Morning/Returns) من شاشة "اختر نوع الرقابة" فقط — نفس المنطق الحرفي المعتمد في
+// dashboard/index.html، بلا أي تعديل في mockApi/mockApiPost أو SCHEMA أو control_types.
+const REGISTER_SCREEN_HIDDEN_TYPES = ['Morning', 'Returns'];
+
 function renderTypeCards() {
   const box = document.getElementById('typeCards');
   box.innerHTML = '';
-  BOOT.controlTypes.forEach(ct => {
-    const d = document.createElement('div');
-    d.className = 'type-card'; d.textContent = ct.name;
-    d.onclick = () => selectType(ct.key);
-    box.appendChild(d);
-  });
+  BOOT.controlTypes
+    .filter(ct => REGISTER_SCREEN_HIDDEN_TYPES.indexOf(ct.key) === -1)
+    .forEach(ct => {
+      const d = document.createElement('div');
+      d.className = 'type-card'; d.textContent = ct.name;
+      d.onclick = () => selectType(ct.key);
+      box.appendChild(d);
+    });
 }
 
 function buildFieldInput(f, idPrefix) {
@@ -573,13 +633,44 @@ function buildFieldInput(f, idPrefix) {
   return `<input type="text" id="${id}">`;
 }
 
+function isMorningNewType(key) { return key === 'MorningPickup' || key === 'MorningReturns'; }
+
+/** حقول التعديل القابلة للعرض/الإرسال من نافذة "تعديل" العامة (openEdit/confirmEdit). لـMorningPickup/
+ * MorningReturns فقط: تُستبعَد نفس أعمدة MN_SERVER_MANAGED_KEYS المُستبعَدة من نموذج الإنشاء — الخادم
+ * يتجاهلها فعليًا عند التعديل (راجع خريطة `skip` في _actionUpdate بـCode.gs)، لكن ترك حقولها ظاهرة
+ * كقابلة للتحرير في الواجهة كان يُوهم المستخدم بأن تعديلها يُحفَظ فعليًا وهو ليس كذلك — توافق مع العقد
+ * الحالي فقط، دون أي تغيير في سلوك الأنواع السبعة القديمة (ct.fields كما هي لها تمامًا). */
+function editableFieldsFor(ct) {
+  return isMorningNewType(ct.key) ? ct.fields.filter(f => MN_SERVER_MANAGED_KEYS.indexOf(f.key) === -1) : ct.fields;
+}
+
 function selectType(key) {
+  // "لا تسمح بتغيير النوع أثناء وجود بيانات غير محفوظة دون تحذير مناسب" — يشمل الانتقال من/إلى أي
+  // نوع (المطابقة الجديدة أو أي نوع قديم)، وليس فقط بين النوعين الجديدين.
+  if (formHasUnsavedData && key !== selectedType) {
+    if (!confirm('لديك بيانات مُدخَلة في النموذج الحالي لم تُحفظ بعد. هل تريد تجاهلها والانتقال إلى نوع رقابة آخر؟')) return;
+  }
   selectedType = key;
   currentClientRequestId = uuid();
+  formHasUnsavedData = false;
   document.querySelectorAll('.type-card').forEach(c => c.classList.toggle('sel', c.textContent === BOOT.controlTypes.find(t=>t.key===key).name));
   const ct = BOOT.controlTypes.find(t => t.key === key);
   document.getElementById('formCard').classList.remove('hidden');
   document.getElementById('formTitle').textContent = '📝 ' + ct.name;
+  document.getElementById('formMsg').innerHTML = '';
+  const saveBtn = document.getElementById('saveBtn');
+
+  if (isMorningNewType(key)) {
+    formMode = 'morningBatch';
+    saveBtn.textContent = '✅ حفظ الدفعة (كل الفروع المختارة)';
+    saveBtn.onclick = submitMorningBatch;
+    renderMorningNewForm(key);
+    return;
+  }
+
+  formMode = 'generic';
+  saveBtn.textContent = '✅ حفظ السجل';
+  saveBtn.onclick = submitRecord;
   const box = document.getElementById('formFields');
   box.innerHTML = '';
   ct.fields.forEach(f => {
@@ -587,15 +678,143 @@ function selectType(key) {
     wrap.innerHTML = `<label>${f.label} ${f.required ? '<span class="req">*</span>' : ''}</label>${buildFieldInput(f, 'f_')}`;
     box.appendChild(wrap);
   });
-  document.getElementById('formMsg').innerHTML = '';
+  box.querySelectorAll('input,select').forEach(el => el.addEventListener('input', () => { formHasUnsavedData = true; }));
 }
 
 function resetFieldsOnly() {
   document.querySelectorAll('#formFields input, #formFields select').forEach(el => { el.value = ''; el.classList.remove('field-err'); });
   currentClientRequestId = uuid(); // a cleared form is a NEW logical request
+  formHasUnsavedData = false;
+}
+
+/* ================= المطابقة الصباحية الجديدة (MorningPickup / MorningReturns) ================= */
+// أعمدة تُدار حصرًا من الخادم (Session/Batch/Snapshot) — لا تُعرَض للإدخال إطلاقًا في هذه الواجهة.
+const MN_SERVER_MANAGED_KEYS = ['batch_id', 'matching_type', 'deadline_snapshot', 'auditor_name'];
+
+function mnFieldsForType(key) {
+  return BOOT.controlTypes.find(t => t.key === key).fields.filter(f => f.key !== 'branch' && MN_SERVER_MANAGED_KEYS.indexOf(f.key) === -1);
+}
+
+/** معرّف DOM آمن مُشتق من اسم الفرع (قد يحتوي مسافات/عربية) — لا يُستخدَم إطلاقًا كمصدر بيانات، فقط
+ * كمفتاح ربط بين خانة الاختيار وبطاقتها؛ اسم الفرع الفعلي يبقى محفوظًا في data-branch. */
+function mnSafeId(branchName) {
+  return 'mnb_' + Array.from(branchName).map(c => c.codePointAt(0).toString(36)).join('');
+}
+
+async function renderMorningNewForm(key) {
+  mnCurrentType = key;
+  mnSelectedBranches = [];
+  mnBatchRequestId = uuid();
+  const box = document.getElementById('formFields');
+  box.innerHTML = '<div class="msg info">⏳ جارٍ تحميل الفروع المسموح بها لحسابك...</div>';
+
+  const br = await api('myBranches');
+  if (!br.ok) {
+    if (isSessionError(br)) { handleSessionExpiry(br.error); return; }
+    box.innerHTML = `<div class="msg err">تعذّر تحميل قائمة الفروع المسموح بها: ${escapeHtml(br.error)}</div>`;
+    return;
+  }
+  const allowedBranches = br.branches || [];
+  box.innerHTML = `
+    <div class="msg info">نوع المطابقة المحدَّد: <b>${escapeHtml(BOOT.controlTypes.find(t=>t.key===key).name)}</b> — إلزامي وثابت طوال هذا النموذج (لا يمكن حفظ سجل بلا نوع محدَّد).</div>
+    <label>اختر فرعًا واحدًا أو أكثر <span class="req">*</span></label>
+    <div class="branch-chip-row" id="mnBranchChips">${
+      allowedBranches.length
+        ? allowedBranches.map(name => `<label class="branch-chip"><input type="checkbox" data-branch="${escapeHtml(name)}" onchange="onMnBranchToggle(this)"> ${escapeHtml(name)}</label>`).join('')
+        : '<em>لا توجد فروع مسموح بها لحسابك حاليًا — راجع مسؤول النظام.</em>'
+    }</div>
+    <div id="mnBranchCards"></div>
+    <div id="mnBatchSummary"></div>
+  `;
+}
+
+function onMnBranchToggle(cb) {
+  formHasUnsavedData = true;
+  const name = cb.dataset.branch;
+  if (cb.checked) { if (mnSelectedBranches.indexOf(name) === -1) mnSelectedBranches.push(name); }
+  else mnSelectedBranches = mnSelectedBranches.filter(n => n !== name);
+  renderMnBranchCards();
+}
+
+function renderMnBranchCards() {
+  const box = document.getElementById('mnBranchCards');
+  const existing = new Set(Array.from(box.children).map(c => c.dataset.branch));
+  const wanted = new Set(mnSelectedBranches);
+  // إزالة بطاقات الفروع التي أُلغي اختيارها فقط — البطاقات الباقية تحتفظ ببياناتها المُدخَلة كما هي.
+  Array.from(box.children).forEach(c => { if (!wanted.has(c.dataset.branch)) c.remove(); });
+  const fields = mnFieldsForType(mnCurrentType);
+  mnSelectedBranches.forEach(branchName => {
+    if (existing.has(branchName)) return; // بطاقة موجودة بالفعل — لا تُعاد كتابتها فتُفقَد بياناتها
+    const safeId = mnSafeId(branchName);
+    const card = document.createElement('div');
+    card.className = 'card branch-card';
+    card.dataset.branch = branchName;
+    let html = `<h4>🏢 ${escapeHtml(branchName)} <button type="button" class="btn small secondary" onclick="onMnRemoveBranchCard('${escapeHtml(branchName).replace(/'/g,"\\'")}')">إزالة هذا الفرع</button></h4>`;
+    fields.forEach(f => {
+      html += `<label>${escapeHtml(f.label)} ${f.required ? '<span class="req">*</span>' : ''}</label>${buildFieldInput(f, safeId + '_')}`;
+    });
+    html += `<label>الفرق بين المرسل والمستلم (محسوب لحظيًا — للعرض فقط، الخادم هو المرجع النهائي)</label><input type="text" id="${safeId}_diffDisplay" readonly>`;
+    card.innerHTML = html;
+    box.appendChild(card);
+    card.querySelectorAll('input,select').forEach(el => el.addEventListener('input', () => { formHasUnsavedData = true; }));
+    ['sent_shipments', 'received_shipments'].forEach(k => {
+      const el = document.getElementById(safeId + '_' + k);
+      if (el) el.addEventListener('input', () => updateMnCardDiff(safeId));
+    });
+    updateMnCardDiff(safeId);
+  });
+  updateMnBatchSummary();
+}
+
+function onMnRemoveBranchCard(branchName) {
+  mnSelectedBranches = mnSelectedBranches.filter(n => n !== branchName);
+  const chip = document.querySelector(`#mnBranchChips input[data-branch="${CSS.escape(branchName)}"]`);
+  if (chip) chip.checked = false;
+  renderMnBranchCards();
+}
+
+function updateMnCardDiff(safeId) {
+  const sentEl = document.getElementById(safeId + '_sent_shipments');
+  const recvEl = document.getElementById(safeId + '_received_shipments');
+  const diffEl = document.getElementById(safeId + '_diffDisplay');
+  if (!diffEl) return;
+  if (!sentEl.value || !recvEl.value) { diffEl.value = ''; diffEl.classList.remove('diff-negative'); return; }
+  const diff = Number(sentEl.value) - Number(recvEl.value);
+  diffEl.value = diff;
+  // "إذا كانت الشحنات المستلمة أكبر من المرسلة، اسمح بالقيمة السالبة... مع تحذير بصري واضح" — تحذير
+  // بصري فقط، لا رفض من الواجهة؛ التحقق النهائي دائمًا من الخادم.
+  diffEl.classList.toggle('diff-negative', diff < 0);
+  diffEl.title = diff < 0 ? '⚠️ الشحنات المستلمة أكبر من المرسلة لهذا الفرع.' : '';
+}
+
+function updateMnBatchSummary() {
+  const box = document.getElementById('mnBatchSummary');
+  if (!box) return;
+  box.innerHTML = mnSelectedBranches.length
+    ? `<div class="batch-summary">📋 سيتم حفظ ${mnSelectedBranches.length} سجل مستقل (فرع واحد لكل سجل)، بمعرّف دفعة (Batch ID) مشترك يُنشئه الخادم: ${mnSelectedBranches.map(escapeHtml).join('، ')}</div>`
+    : '';
+}
+
+/** resetMorningBatchFields(): يمسح خانات الفروع/البطاقات والحالة دون لمس #formMsg إطلاقًا — يُستخدَم
+ * بعد نجاح الحفظ (submitMorningBatch) حيث يجب أن تبقى رسالة "تم الحفظ بنجاح" ظاهرة للمستخدم، بخلاف
+ * clearForm() (زر "مسح النموذج" اليدوي) الذي يمسح الرسالة أيضًا لأنه إلغاء صريح من المستخدم نفسه. */
+function resetMorningBatchFields() {
+  mnSelectedBranches = [];
+  mnBatchRequestId = uuid();
+  formHasUnsavedData = false;
+  document.querySelectorAll('#mnBranchChips input[type=checkbox]').forEach(cb => cb.checked = false);
+  const cardsBox = document.getElementById('mnBranchCards');
+  if (cardsBox) cardsBox.innerHTML = '';
+  updateMnBatchSummary();
 }
 
 function clearForm() {
+  if (formMode === 'morningBatch') {
+    if (formHasUnsavedData && !confirm('سيتم مسح كل الفروع والبيانات المُدخَلة في هذا النموذج. متابعة؟')) return;
+    resetMorningBatchFields();
+    document.getElementById('formMsg').innerHTML = '';
+    return;
+  }
   resetFieldsOnly();
   document.getElementById('formMsg').innerHTML = '';
 }
@@ -637,6 +856,29 @@ function clientValidateRules(ct, data) {
         if (total > 0 && total !== sum) {
           errors.push(`${rule.message} (الإجمالي المُدخل: ${total}، مجموع الفئات الأربع: ${sum}، الفرق: ${total - sum})`);
         }
+        break;
+      }
+      // خاصتان بـMorningPickup/MorningReturns — تحقق واجهة سريع فقط (Fast-path UX)؛ الخادم هو المرجع
+      // النهائي دائمًا ويُعيد رفض المحاولات التي تتجاوز هذا التحقق (مثل تلاعب مباشر بالطلب).
+      case 'receiver_employee_required_if_received_gt_zero':
+        if (Number(data.received_shipments) > 0 && !data.receiver_employee) errors.push(rule.message);
+        break;
+      case 'delay_reason_required_if_late_snapshot': {
+        const deadline = BOOT.targets && BOOT.targets.morning_matching_deadline;
+        if (deadline && data.branch_notification_time && !data.delay_reason) {
+          const toSec = s => { const p = String(s).split(':'); return (Number(p[0])||0)*3600 + (Number(p[1])||0)*60 + (Number(p[2])||0); };
+          if (toSec(data.branch_notification_time) > toSec(deadline)) errors.push(rule.message);
+        }
+        break;
+      }
+      case 'shipments_count_non_negative_integer': {
+        const badCount = ['sent_shipments', 'received_shipments'].some(k => {
+          const v = data[k];
+          if (v === undefined || v === null || v === '') return false;
+          const n = Number(v);
+          return isNaN(n) || !isFinite(n) || Math.floor(n) !== n || n < 0;
+        });
+        if (badCount) errors.push(rule.message);
         break;
       }
     }
@@ -681,11 +923,81 @@ async function submitRecord() {
         رقم السجل: <b>${res.recordId}</b><br>
         نوع الرقابة: ${res.typeName || ct.name}<br>
         وقت الحفظ: ${res.savedAt || now}</div>`;
+    } else if (isSessionError(res)) {
+      handleSessionExpiry(res.error); // البيانات المُدخَلة تبقى كما هي في الحقول — لا مسح قبل التوجيه
     } else {
       msgBox.innerHTML = `<div class="msg err">⚠️ ${(res.errors || [res.error || 'فشل الحفظ لسبب غير معروف.']).join('<br>')}</div>`;
     }
   } finally {
     saveInFlight = false; btn.disabled = false;
+  }
+}
+
+let mnSaveInFlight = false;
+async function submitMorningBatch() {
+  if (mnSaveInFlight) return; // منع الإرسال المكرر أثناء تنفيذ الطلب (نفس حارس saveInFlight للنموذج العام)
+  const ct = BOOT.controlTypes.find(t => t.key === mnCurrentType);
+  const msgBox = document.getElementById('formMsg');
+  if (!mnSelectedBranches.length) {
+    msgBox.innerHTML = `<div class="msg err">⚠️ اختر فرعًا واحدًا على الأقل قبل الحفظ.</div>`;
+    return;
+  }
+  const fields = mnFieldsForType(mnCurrentType);
+  const rows = [];
+  let missing = [];      // [{branch, label}]
+  let ruleErrorsAll = []; // [{branch, message}]
+  mnSelectedBranches.forEach(branchName => {
+    const safeId = mnSafeId(branchName);
+    const data = {};
+    fields.forEach(f => {
+      const el = document.getElementById(safeId + '_' + f.key);
+      if (!el) return;
+      el.classList.remove('field-err');
+      const val = el.value;
+      if (f.required && !val) { missing.push({ branch: branchName, label: f.label }); el.classList.add('field-err'); }
+      if (val !== '') data[f.key] = val;
+    });
+    const errs = clientValidateRules(ct, data);
+    errs.forEach(m => ruleErrorsAll.push({ branch: branchName, message: m }));
+    rows.push({ branch: branchName, data });
+  });
+  if (missing.length) {
+    msgBox.innerHTML = `<div class="msg err">⚠️ حقول إلزامية لم تُملأ:<br>${missing.map(m => `فرع "${escapeHtml(m.branch)}": ${escapeHtml(m.label)}`).join('<br>')}</div>`;
+    return;
+  }
+  if (ruleErrorsAll.length) {
+    // نفس منطق submitRecord: تُوقَف العملية قبل الوصول للخادم إطلاقًا، والبيانات المُدخَلة تبقى كما هي.
+    msgBox.innerHTML = `<div class="msg err">⚠️ ${ruleErrorsAll.map(e => `فرع "${escapeHtml(e.branch)}": ${escapeHtml(e.message)}`).join('<br>')}</div>`;
+    return;
+  }
+
+  const btn = document.getElementById('saveBtn');
+  mnSaveInFlight = true; btn.disabled = true;
+  msgBox.innerHTML = `<div class="msg info">⏳ جارٍ حفظ ${rows.length} سجل...</div>`;
+  try {
+    // Batch ID يُنشئه الخادم حصرًا (Utilities.getUuid() في _actionSaveMorningBatch) — الواجهة لا تُنشئ
+    // ولا ترسل أي batch_id، فقط clientRequestId الخاص بها لأغراض الحماية من التكرار (Idempotency).
+    const res = await apiPost({ action: 'saveMorningBatch', type: mnCurrentType, rows, clientRequestId: mnBatchRequestId });
+    if (res.ok) {
+      // لا يُعرَض نجاح إلا بعد استجابة الخادم فعليًا بنجاح كامل — لا نجاح متفائل قبل ذلك.
+      const branchList = (res.branches || rows.map(r => r.branch)).map(escapeHtml).join('، ');
+      msgBox.innerHTML = `<div class="msg ok">✅ تم حفظ ${res.recordIds ? res.recordIds.length : rows.length} سجل بنجاح.<br>
+        الفروع: ${branchList}<br>
+        أرقام السجلات: ${(res.recordIds || []).map(escapeHtml).join('، ')}<br>
+        Batch ID: ${escapeHtml(res.batchId || '')}<br>
+        وقت الحفظ: ${escapeHtml(res.savedAt || '')}</div>`;
+      resetMorningBatchFields(); // نجاح كامل فقط — لا مسح جزئي أبدًا، ودون لمس رسالة النجاح المعروضة للتو
+    } else if (isSessionError(res)) {
+      handleSessionExpiry(res.error); // لا مسح لأي بطاقة فرع أو بياناتها قبل التوجيه
+    } else {
+      // رفض كامل من الخادم (فرع واحد غير مصرَّح به، تحقق فشل، ...) — لا افتراض أن بعض الفروع حُفظت،
+      // ولا مسح لأي بيانات مُدخَلة حتى يستطيع المستخدم تصحيح المشكلة وإعادة المحاولة.
+      msgBox.innerHTML = `<div class="msg err">⚠️ فشلت عملية الحفظ الجماعي بالكامل — لم يُحفظ أي سجل:<br>${escapeHtml((res.errors || [res.error || 'سبب غير معروف.']).join(' | '))}</div>`;
+    }
+  } catch (e) {
+    msgBox.innerHTML = `<div class="msg err">⚠️ تعذّر الاتصال بالخادم أثناء الحفظ الجماعي — لم يُحفظ أي سجل (لا افتراض نجاح جزئي). أعد المحاولة.</div>`;
+  } finally {
+    mnSaveInFlight = false; btn.disabled = false;
   }
 }
 
@@ -773,7 +1085,7 @@ async function openEdit(type, id) {
   document.getElementById('editRecordId').textContent = id;
   const box = document.getElementById('editFields');
   box.innerHTML = '';
-  ct.fields.forEach(f => {
+  editableFieldsFor(ct).forEach(f => {
     const wrap = document.createElement('div');
     wrap.innerHTML = `<label>${f.label} ${f.required ? '<span class="req">*</span>' : ''}</label>${buildFieldInput(f, 'e_')}`;
     box.appendChild(wrap);
@@ -791,7 +1103,7 @@ async function confirmEdit() {
   const { type, id, ct } = editContext;
   const data = {};
   let missing = [];
-  ct.fields.forEach(f => {
+  editableFieldsFor(ct).forEach(f => {
     const el = document.getElementById('e_' + f.key);
     const val = el.value;
     if (f.required && !val) missing.push(f.label);
@@ -808,6 +1120,8 @@ async function confirmEdit() {
   if (res.ok) {
     msgBox.innerHTML = `<div class="msg ok">✅ ${res.message}</div>`;
     setTimeout(() => { closeEditModal(); runSearch(searchState.page); }, 900);
+  } else if (isSessionError(res)) {
+    handleSessionExpiry(res.error); // البيانات المُدخَلة في نافذة التعديل تبقى كما هي — لا مسح قبل التوجيه
   } else {
     msgBox.innerHTML = `<div class="msg err">${(res.errors || [res.error]).join('<br>')}</div>`;
   }
@@ -903,6 +1217,9 @@ async function loadReports() {
     dateTo: document.getElementById('rDateTo').value,
     branch: document.getElementById('rBranch').value,
     type: document.getElementById('rType').value,
+    // فلتر إضافي بحت خاص فقط بنوعي المطابقة الصباحية الجديدين (MorningPickup/MorningReturns) — قيمته
+    // الافتراضية "" لا تُغيّر أي شيء في تقارير Morning/Returns القديمة أو أي نوع رقابة آخر إطلاقًا.
+    morningMatchingType: document.getElementById('rMorningType').value,
     comparePrev: document.getElementById('rCompare').checked ? '1' : '0',
   };
   const res = await api('reports', params);
@@ -1197,6 +1514,309 @@ if (API_URL && USER_NAME) {
 } else {
   showConfig();
 }
+
+/* =====================================================================================
+ * ARRIVE AUDIT CONTROL TOWER — LOCAL PREVIEW / MOCK DATA LAYER
+ * =====================================================================================
+ * This block is appended AFTER the original, approved Dashboard script and does not
+ * modify a single line of it. It works purely by re-assigning the two functions the
+ * approved script already uses for every server call — `api()` (GET) and `apiPost()`
+ * (POST) — which, as plain top-level function declarations in a classic script, are
+ * ordinary reassignable global bindings. Every existing function in the approved
+ * Dashboard (rendering, validation, modals, filters, etc.) is untouched and keeps
+ * calling `api()`/`apiPost()` exactly as before; only what answers those calls changes.
+ *
+ * No network request is ever made in this mode: nothing here calls `fetch`.
+ * All data is generated in memory from the real backend/schema.json (the same source
+ * of truth Code.gs itself is built from), so field keys/labels/lists match production
+ * exactly. Nothing here is real production or TEST COPY data.
+ * ===================================================================================== */
+(function () {
+  var MOCK = {"controlTypes":[{"key":"Morning","name":"المطابقة الصباحية","fields":[{"key":"date","label":"التاريخ","type":"date","required":true},{"key":"time","label":"وقت المطابقة","type":"time","required":false},{"key":"branch","label":"الفرع","type":"list","list":"Branches","required":true},{"key":"auditor","label":"اسم المدقق","type":"list","list":"Auditors","required":true},{"key":"total_shipments","label":"إجمالي الشحنات","type":"number","required":true},{"key":"matched_shipments","label":"شحنات مطابقة","type":"number","required":true},{"key":"unmatched_shipments","label":"شحنات غير مطابقة","type":"number","required":false},{"key":"not_found_shipments","label":"شحنات لم يتم العثور عليها","type":"number","required":false},{"key":"error_shipments","label":"شحنات بها أخطاء","type":"number","required":false},{"key":"issue_type","label":"نوع المشكلة","type":"list","list":"IssueTypes","required":false},{"key":"issue_detail","label":"تفاصيل المشكلة","type":"text","required":false},{"key":"owner","label":"المسؤول عن الإجراء","type":"list","list":"Users","required":false},{"key":"status","label":"حالة المتابعة","type":"list","list":"FollowupStatus","required":false},{"key":"close_date","label":"تاريخ الإغلاق","type":"date","required":false},{"key":"notes","label":"ملاحظات","type":"text","required":false}],"filters":{"date":"date","branch":["branch"],"auditor":"auditor","owner":["owner"],"status":["status"],"priority":null},"validationRules":[{"rule":"morning_count_reconciliation","message":"مجموع (شحنات مطابقة + غير مطابقة + لم يتم العثور عليها + بها أخطاء) لا يساوي إجمالي الشحنات — راجع الأعداد قبل الحفظ."},{"rule":"closed_requires_close_date","message":"الحالة \"مغلقة\" تتطلب تسجيل تاريخ الإغلاق."},{"rule":"open_excludes_close_date","message":"الحالة \"مفتوحة\" لا يجب أن يكون لها تاريخ إغلاق مسجَّل — امسح تاريخ الإغلاق أو غيّر الحالة إلى \"مغلقة\"."},{"rule":"close_date_not_before_base","baseField":"date","message":"تاريخ الإغلاق لا يمكن أن يكون قبل تاريخ المطابقة نفسه."}]},{"key":"Returns","name":"مطابقة المرتجعات","fields":[{"key":"date","label":"التاريخ","type":"date","required":true},{"key":"branch","label":"الفرع","type":"list","list":"Branches","required":true},{"key":"awb","label":"رقم البوليصة","type":"text","required":true},{"key":"merchant","label":"المرسل / التاجر","type":"text","required":false},{"key":"customer","label":"العميل","type":"text","required":false},{"key":"return_reason","label":"سبب المرتجع","type":"text","required":false},{"key":"return_log_date","label":"تاريخ تسجيل المرتجع","type":"date","required":false},{"key":"return_arrival_date","label":"تاريخ وصول المرتجع","type":"date","required":false},{"key":"match_status","label":"حالة المطابقة","type":"list","list":"MatchStatus","required":true},{"key":"review_result","label":"نتيجة المراجعة","type":"list","list":"ReviewResultStatus","required":false},{"key":"system_status","label":"حالة الشحنة بالنظام","type":"text","required":false},{"key":"actual_status","label":"الحالة الفعلية","type":"text","required":false},{"key":"mismatch_reason","label":"سبب عدم المطابقة","type":"text","required":false},{"key":"owner","label":"مسؤول المتابعة","type":"list","list":"Users","required":false},{"key":"status","label":"حالة الإغلاق","type":"list","list":"FollowupStatus","required":false},{"key":"close_date","label":"تاريخ الإغلاق","type":"date","required":false},{"key":"notes","label":"ملاحظات","type":"text","required":false}],"filters":{"date":"date","branch":["branch"],"auditor":null,"owner":["owner"],"status":["status","match_status"],"priority":null},"validationRules":[{"rule":"closed_requires_close_date","message":"الحالة \"مغلقة\" تتطلب تسجيل تاريخ الإغلاق."},{"rule":"open_excludes_close_date","message":"الحالة \"مفتوحة\" لا يجب أن يكون لها تاريخ إغلاق مسجَّل — امسح تاريخ الإغلاق أو غيّر الحالة إلى \"مغلقة\"."},{"rule":"close_date_not_before_base","baseField":"date","message":"تاريخ الإغلاق لا يمكن أن يكون قبل تاريخ السجل نفسه."}]},{"key":"Scrub","name":"مسح الحالات","fields":[{"key":"date","label":"التاريخ","type":"date","required":true},{"key":"time","label":"وقت العملية","type":"time","required":false},{"key":"awb","label":"رقم البوليصة","type":"text","required":true},{"key":"branch","label":"الفرع","type":"list","list":"Branches","required":true},{"key":"user","label":"المستخدم","type":"list","list":"Users","required":true},{"key":"status_before","label":"الحالة قبل التعديل","type":"text","required":false},{"key":"status_after","label":"الحالة بعد التعديل","type":"text","required":false},{"key":"op_type","label":"نوع العملية","type":"list","list_inline":["مسح","تعديل"],"required":false},{"key":"reason","label":"سبب المسح أو التعديل","type":"text","required":false},{"key":"has_approval","label":"هل توجد موافقة؟","type":"list","list":"YesNo","required":true},{"key":"approval_ref","label":"مرجع الموافقة","type":"text","required":false},{"key":"review_result","label":"نتيجة المراجعة","type":"list","list":"ReviewResultStatus","required":false},{"key":"violation_type","label":"تصنيف المخالفة","type":"list","list":"ViolationTypes","required":false},{"key":"required_action","label":"الإجراء المطلوب","type":"text","required":false},{"key":"owner","label":"المسؤول عن المتابعة","type":"list","list":"Users","required":false},{"key":"status","label":"حالة المتابعة","type":"list","list":"FollowupStatus","required":false},{"key":"close_date","label":"تاريخ الإغلاق","type":"date","required":false},{"key":"notes","label":"ملاحظات","type":"text","required":false}],"filters":{"date":"date","branch":["branch"],"auditor":"user","owner":["owner"],"status":["status","review_result"],"priority":null},"validationRules":[{"rule":"closed_requires_close_date","message":"الحالة \"مغلقة\" تتطلب تسجيل تاريخ الإغلاق."},{"rule":"open_excludes_close_date","message":"الحالة \"مفتوحة\" لا يجب أن يكون لها تاريخ إغلاق مسجَّل — امسح تاريخ الإغلاق أو غيّر الحالة إلى \"مغلقة\"."},{"rule":"close_date_not_before_base","baseField":"date","message":"تاريخ الإغلاق لا يمكن أن يكون قبل تاريخ السجل نفسه."}]},{"key":"Transfer","name":"التحويلات","fields":[{"key":"date","label":"تاريخ التحويل","type":"date","required":true},{"key":"transfer_no","label":"رقم التحويل","type":"text","required":true},{"key":"awb","label":"رقم البوليصة","type":"text","required":false},{"key":"from_branch","label":"الفرع المحول","type":"list","list":"Branches","required":true},{"key":"to_branch","label":"الفرع المستلم","type":"list","list":"Branches","required":true},{"key":"owner","label":"مسؤول التحويل","type":"list","list":"Users","required":false},{"key":"send_dt","label":"تاريخ ووقت الإرسال","type":"datetime","required":false},{"key":"receive_dt","label":"تاريخ ووقت الاستلام","type":"datetime","required":false},{"key":"status","label":"حالة التحويل","type":"list","list":"TransferStatus","required":true},{"key":"confirmed","label":"هل تم التأكيد؟","type":"list","list":"YesNo","required":false},{"key":"confirm_method","label":"وسيلة التأكيد","type":"text","required":false},{"key":"confirm_time","label":"وقت التأكيد","type":"time","required":false},{"key":"has_issue","label":"وجود مشكلة","type":"list","list":"YesNo","required":false},{"key":"issue_type","label":"نوع المشكلة","type":"list","list":"IssueTypes","required":false},{"key":"issue_owner","label":"المسؤول عن المتابعة","type":"list","list":"Users","required":false},{"key":"close_status","label":"حالة الإغلاق","type":"list","list":"FollowupStatus","required":false},{"key":"notes","label":"ملاحظات","type":"text","required":false}],"filters":{"date":"date","branch":["from_branch","to_branch"],"auditor":null,"owner":["owner","issue_owner"],"status":["status","close_status"],"priority":null},"validationRules":[{"rule":"receive_after_send","message":"وقت الاستلام لا يمكن أن يسبق وقت الإرسال لنفس السطر"}]},{"key":"Issues","name":"المشاكل اليومية","fields":[{"key":"detect_date","label":"تاريخ الاكتشاف","type":"date","required":true},{"key":"detect_time","label":"وقت الاكتشاف","type":"time","required":false},{"key":"branch","label":"الفرع","type":"list","list":"Branches","required":true},{"key":"department","label":"القسم","type":"text","required":false},{"key":"source","label":"مصدر اكتشاف المشكلة","type":"text","required":false},{"key":"issue_type","label":"نوع المشكلة","type":"list","list":"IssueTypes","required":true},{"key":"description","label":"وصف المشكلة","type":"text","required":true},{"key":"awb","label":"رقم البوليصة إن وجد","type":"text","required":false},{"key":"affected_count","label":"عدد الحالات المتأثرة","type":"number","required":false},{"key":"priority","label":"درجة الأولوية","type":"list","list":"PriorityLevels","required":true},{"key":"owner","label":"المسؤول عن الحل","type":"list","list":"Users","required":true},{"key":"required_action","label":"الإجراء المطلوب","type":"text","required":false},{"key":"due_date","label":"تاريخ الاستحقاق","type":"date","required":false},{"key":"status","label":"حالة المشكلة","type":"list","list":"FollowupStatus","required":true},{"key":"close_date","label":"تاريخ الإغلاق","type":"date","required":false},{"key":"delay_reason","label":"سبب التأخير","type":"text","required":false},{"key":"corrective_action","label":"الإجراء التصحيحي","type":"text","required":false},{"key":"preventive_action","label":"الإجراء الوقائي","type":"text","required":false},{"key":"auditor_notes","label":"ملاحظات المدقق","type":"text","required":false}],"filters":{"date":"detect_date","branch":["branch"],"auditor":null,"owner":["owner"],"status":["status"],"priority":"priority"},"validationRules":[{"rule":"closed_requires_close_date","message":"الحالة \"مغلقة\" تتطلب تسجيل تاريخ الإغلاق."},{"rule":"late_requires_delay_reason","message":"الحالة \"متأخرة\" تتطلب تسجيل سبب التأخير."},{"rule":"open_excludes_close_date","message":"الحالة \"مفتوحة\" لا يجب أن يكون لها تاريخ إغلاق مسجَّل — امسح تاريخ الإغلاق أو غيّر الحالة إلى \"مغلقة\"."},{"rule":"close_date_not_before_base","baseField":"detect_date","message":"تاريخ الإغلاق لا يمكن أن يكون قبل تاريخ رصد المشكلة."}]},{"key":"Penalty","name":"الجزاءات","fields":[{"key":"log_date","label":"تاريخ تسجيل المخالفة","type":"date","required":true},{"key":"approve_date","label":"تاريخ اعتماد الجزاء","type":"date","required":false},{"key":"branch","label":"الفرع","type":"list","list":"Branches","required":true},{"key":"employee","label":"اسم الموظف","type":"text","required":true},{"key":"employee_id","label":"الرقم الوظيفي إن وجد","type":"text","required":false},{"key":"violation_type","label":"نوع المخالفة","type":"list","list":"ViolationTypes","required":true},{"key":"description","label":"وصف المخالفة","type":"text","required":false},{"key":"ref","label":"مرجع المشكلة أو البوليصة","type":"text","required":false},{"key":"severity","label":"درجة المخالفة","type":"list","list":"PriorityLevels","required":false},{"key":"reviewed","label":"هل تمت المراجعة؟","type":"list","list":"YesNo","required":true},{"key":"review_decision","label":"قرار المراجعة","type":"list","list":"ReviewResultStatus","required":false},{"key":"penalty_type","label":"نوع الجزاء المعتمد","type":"list","list":"PenaltyTypes","required":false},{"key":"penalty_value","label":"قيمة الجزاء","type":"number","required":false},{"key":"approver","label":"جهة الاعتماد","type":"text","required":false},{"key":"status","label":"حالة الجزاء","type":"list","list":"PenaltyCaseStatus","required":true},{"key":"execute_date","label":"تاريخ التنفيذ","type":"date","required":false},{"key":"appeal_status","label":"حالة التظلم إن وجد","type":"text","required":false},{"key":"notes","label":"ملاحظات","type":"text","required":false}],"filters":{"date":"log_date","branch":["branch"],"auditor":null,"owner":["approver"],"status":["status","review_decision"],"priority":"severity"},"validationRules":[{"rule":"no_approve_before_review","message":"لا يمكن اعتماد أو تنفيذ جزاء قبل اكتمال المراجعة (هل تمت المراجعة؟ = نعم)"},{"rule":"executed_requires_execute_date","message":"حالة الجزاء \"منفذة\" تتطلب تسجيل تاريخ التنفيذ."}]},{"key":"Overdue","name":"الحالات المتأخرة","fields":[{"key":"detect_date","label":"تاريخ الرصد","type":"date","required":true},{"key":"awb","label":"رقم البوليصة","type":"text","required":true},{"key":"branch","label":"الفرع","type":"list","list":"Branches","required":true},{"key":"governorate","label":"المحافظة / المنطقة","type":"list","list":"Governorates","required":false},{"key":"sender","label":"المرسل","type":"text","required":false},{"key":"shipment_status","label":"حالة الشحنة","type":"text","required":false},{"key":"created_date","label":"تاريخ إنشاء الطلب","type":"date","required":true},{"key":"delay_reason","label":"سبب التأخير","type":"text","required":false},{"key":"owner","label":"المسؤول عن المتابعة","type":"list","list":"Users","required":false},{"key":"required_action","label":"الإجراء المطلوب","type":"text","required":false},{"key":"status","label":"حالة الإجراء","type":"list","list":"FollowupStatus","required":false},{"key":"close_date","label":"تاريخ الإغلاق","type":"date","required":false},{"key":"notes","label":"ملاحظات","type":"text","required":false}],"filters":{"date":"detect_date","branch":["branch"],"auditor":null,"owner":["owner"],"status":["status","delay_class"],"priority":null},"validationRules":[{"rule":"closed_requires_close_date","message":"الحالة \"مغلقة\" تتطلب تسجيل تاريخ الإغلاق."},{"rule":"open_excludes_close_date","message":"الحالة \"مفتوحة\" لا يجب أن يكون لها تاريخ إغلاق مسجَّل — امسح تاريخ الإغلاق أو غيّر الحالة إلى \"مغلقة\"."},{"rule":"close_date_not_before_base","baseField":"detect_date","message":"تاريخ الإغلاق لا يمكن أن يكون قبل تاريخ رصد الحالة."}]},{"key":"MorningPickup","name":"المطابقة الصباحية - بيك أب","fields":[{"key":"matching_date","label":"تاريخ المطابقة","type":"date","required":true},{"key":"branch","label":"الفرع","type":"list","list":"Branches","required":true},{"key":"auditor_name","label":"اسم المدقق","type":"text","required":false},{"key":"branch_notification_time","label":"وقت تبليغ الفرع","type":"time","required":true},{"key":"sent_shipments","label":"الشحنات المرسلة","type":"number","required":true},{"key":"received_shipments","label":"الشحنات المستلمة","type":"number","required":true},{"key":"receiver_employee","label":"موظف الاستلام","type":"list","list":"Users","required":false},{"key":"problem_type","label":"نوع المشكلة","type":"list","list":"IssueTypes","required":false},{"key":"problem_details","label":"تفاصيل المشكلة","type":"text","required":false},{"key":"wrong_branch","label":"الفرع الخطأ (إن وُجد)","type":"list","list":"Branches","required":false},{"key":"delay_reason","label":"سبب التأخير","type":"text","required":false},{"key":"status","label":"حالة المتابعة","type":"list","list":"FollowupStatus","required":false},{"key":"close_date","label":"تاريخ الإغلاق","type":"date","required":false},{"key":"notes","label":"ملاحظات","type":"text","required":false},{"key":"batch_id","label":"معرّف الدفعة (Batch ID)","type":"text","required":false},{"key":"matching_type","label":"نوع المطابقة","type":"text","required":false},{"key":"deadline_snapshot","label":"الموعد النهائي (وقت الحفظ)","type":"text","required":false}],"filters":{"date":"matching_date","branch":["branch"],"auditor":null,"owner":["receiver_employee"],"status":["status","notification_status"],"priority":null},"validationRules":[{"rule":"receiver_employee_required_if_received_gt_zero","message":"موظف الاستلام إلزامي عندما تكون الشحنات المستلمة أكبر من صفر."},{"rule":"delay_reason_required_if_late_snapshot","message":"تم تجاوز الموعد النهائي لتبليغ الفرع (حسب الإعداد وقت الحفظ) — سبب التأخير إلزامي."},{"rule":"shipments_count_non_negative_integer","message":"عدد الشحنات (المرسلة/المستلمة) يجب أن يكون رقمًا صحيحًا غير سالب."},{"rule":"branch_notification_time_valid_format","message":"صيغة \"وقت تبليغ الفرع\" غير صحيحة — يجب أن تكون HH:mm (مثال: 09:30)."},{"rule":"closed_requires_close_date","message":"الحالة \"مغلقة\" تتطلب تسجيل تاريخ الإغلاق."},{"rule":"open_excludes_close_date","message":"الحالة \"مفتوحة\" لا يجب أن يكون لها تاريخ إغلاق مسجَّل — امسح تاريخ الإغلاق أو غيّر الحالة إلى \"مغلقة\"."},{"rule":"close_date_not_before_base","baseField":"matching_date","message":"تاريخ الإغلاق لا يمكن أن يكون قبل تاريخ المطابقة نفسها."}]},{"key":"MorningReturns","name":"المطابقة الصباحية - مرتجعات","fields":[{"key":"matching_date","label":"تاريخ المطابقة","type":"date","required":true},{"key":"branch","label":"الفرع","type":"list","list":"Branches","required":true},{"key":"auditor_name","label":"اسم المدقق","type":"text","required":false},{"key":"branch_notification_time","label":"وقت تبليغ الفرع","type":"time","required":true},{"key":"sent_shipments","label":"الشحنات المرسلة","type":"number","required":true},{"key":"received_shipments","label":"الشحنات المستلمة","type":"number","required":true},{"key":"receiver_employee","label":"موظف الاستلام","type":"list","list":"Users","required":false},{"key":"problem_type","label":"نوع المشكلة","type":"list","list":"IssueTypes","required":false},{"key":"problem_details","label":"تفاصيل المشكلة","type":"text","required":false},{"key":"wrong_branch","label":"الفرع الخطأ (إن وُجد)","type":"list","list":"Branches","required":false},{"key":"delay_reason","label":"سبب التأخير","type":"text","required":false},{"key":"status","label":"حالة المتابعة","type":"list","list":"FollowupStatus","required":false},{"key":"close_date","label":"تاريخ الإغلاق","type":"date","required":false},{"key":"notes","label":"ملاحظات","type":"text","required":false},{"key":"batch_id","label":"معرّف الدفعة (Batch ID)","type":"text","required":false},{"key":"matching_type","label":"نوع المطابقة","type":"text","required":false},{"key":"deadline_snapshot","label":"الموعد النهائي (وقت الحفظ)","type":"text","required":false}],"filters":{"date":"matching_date","branch":["branch"],"auditor":null,"owner":["receiver_employee"],"status":["status","notification_status"],"priority":null},"validationRules":[{"rule":"receiver_employee_required_if_received_gt_zero","message":"موظف الاستلام إلزامي عندما تكون الشحنات المستلمة أكبر من صفر."},{"rule":"delay_reason_required_if_late_snapshot","message":"تم تجاوز الموعد النهائي لتبليغ الفرع (حسب الإعداد وقت الحفظ) — سبب التأخير إلزامي."},{"rule":"shipments_count_non_negative_integer","message":"عدد الشحنات (المرسلة/المستلمة) يجب أن يكون رقمًا صحيحًا غير سالب."},{"rule":"branch_notification_time_valid_format","message":"صيغة \"وقت تبليغ الفرع\" غير صحيحة — يجب أن تكون HH:mm (مثال: 09:30)."},{"rule":"closed_requires_close_date","message":"الحالة \"مغلقة\" تتطلب تسجيل تاريخ الإغلاق."},{"rule":"open_excludes_close_date","message":"الحالة \"مفتوحة\" لا يجب أن يكون لها تاريخ إغلاق مسجَّل — امسح تاريخ الإغلاق أو غيّر الحالة إلى \"مغلقة\"."},{"rule":"close_date_not_before_base","baseField":"matching_date","message":"تاريخ الإغلاق لا يمكن أن يكون قبل تاريخ المطابقة نفسها."}]}],"lists":{"Branches":["القاهرة الجديدة","مدينة نصر","المعادي","6 أكتوبر","الشيخ زايد","الإسكندرية - سموحة","الإسكندرية - محرم بك","المنصورة","طنطا","الزقازيق","أسيوط","المنيا","بني سويف","الفيوم","دمياط"],"Governorates":["القاهرة","الجيزة","الإسكندرية","الدقهلية","الغربية","الشرقية","أسيوط","المنيا","بني سويف","الفيوم","دمياط"],"Auditors":["أحمد سالم","منى عبد الله","كريم فتحي","هبة الشريف","محمد سعيد"],"Users":["أحمد سالم","منى عبد الله","كريم فتحي","هبة الشريف","محمد سعيد","مسؤول الفرع","مسؤول الوردية"],"IssueTypes":["خطأ في البيانات","شحنة مفقودة","تأخير تسليم","سوء تعامل مع العميل","خلل في النظام","مخالفة إجراء","أخرى"],"FollowupStatus":["مفتوحة","قيد المتابعة","مغلقة","متأخرة"],"PriorityLevels":["منخفضة","متوسطة","عالية","حرجة"],"ViolationTypes":["تعديل حالة بدون صلاحية","عدم اتباع إجراء","تأخير غير مبرر","خطأ متكرر","تلاعب في البيانات","أخرى"],"TransferStatus":["تم الإرسال","تم الاستلام","تم التأكيد","متأخر","به مشكلة","مغلق"],"PenaltyTypes":["تنبيه شفهي","إنذار كتابي","خصم مالي","إيقاف عن العمل","إنهاء خدمة"],"YesNo":["نعم","لا"],"MatchStatus":["مطابق","غير مطابق"],"ReviewResultStatus":["قيد المراجعة","مصرح به","مخالفة مؤكدة"],"PenaltyCaseStatus":["مسجلة","قيد المراجعة","معتمدة","منفذة","متظلم عليها"]},"targets":{"target_MorningMatchPct":98,"target_ReturnsMatchPct":97,"target_TransferConfirmHrs":24,"target_IssueCloseDays":3,"target_CaseAgeDays":5,"auth_enabled":0,"morning_matching_deadline":"11:00"},"records":[{"type":"Morning","typeName":"المطابقة الصباحية","record":{"رقم السجل":"MM-000001","تاريخ الإدخال":"2026-09-21","وقت الإدخال":"08:11:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","التاريخ":"2026-09-24","وقت المطابقة":"08:10","الفرع":"القاهرة الجديدة","اسم المدقق":"أحمد سالم","إجمالي الشحنات":500,"شحنات مطابقة":490,"شحنات غير مطابقة":6,"شحنات لم يتم العثور عليها":2,"شحنات بها أخطاء":2,"حالة المتابعة":"مغلقة","تاريخ الإغلاق":"2026-09-24","نسبة المطابقة":0.98,"تحقق الأعداد":"صحيح","الفرق عن الإجمالي (محسوب)":0}},{"type":"Morning","typeName":"المطابقة الصباحية","record":{"رقم السجل":"MM-000002","تاريخ الإدخال":"2026-09-22","وقت الإدخال":"09:12:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","التاريخ":"2026-09-25","وقت المطابقة":"08:05","الفرع":"6 أكتوبر","اسم المدقق":"منى عبد الله","إجمالي الشحنات":300,"شحنات مطابقة":270,"شحنات غير مطابقة":20,"شحنات لم يتم العثور عليها":5,"شحنات بها أخطاء":5,"نوع المشكلة":"خطأ في البيانات","تفاصيل المشكلة":"فروقات في عدد الشحنات المرحّلة صباحًا","المسؤول عن الإجراء":"أحمد سالم","حالة المتابعة":"قيد المتابعة","نسبة المطابقة":0.9,"تحقق الأعداد":"صحيح","الفرق عن الإجمالي (محسوب)":0}},{"type":"Returns","typeName":"مطابقة المرتجعات","record":{"رقم السجل":"RM-000001","تاريخ الإدخال":"2026-09-23","وقت الإدخال":"07:13:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","التاريخ":"2026-09-24","الفرع":"مدينة نصر","رقم البوليصة":"AWB-771234","المرسل / التاجر":"متجر النور","العميل":"أحمد محمود","سبب المرتجع":"رفض الاستلام","حالة المطابقة":"مطابق","نتيجة المراجعة":"مقبول","حالة الإغلاق":"مغلقة","تاريخ الإغلاق":"2026-09-24"}},{"type":"Returns","typeName":"مطابقة المرتجعات","record":{"رقم السجل":"RM-000002","تاريخ الإدخال":"2026-09-24","وقت الإدخال":"08:14:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","التاريخ":"2026-09-25","الفرع":"الإسكندرية - سموحة","رقم البوليصة":"AWB-771290","المرسل / التاجر":"متجر الأمل","العميل":"سارة علي","سبب المرتجع":"عنوان خاطئ","حالة المطابقة":"غير مطابق","نتيجة المراجعة":"قيد المراجعة","حالة الإغلاق":"مفتوحة"}},{"type":"Scrub","typeName":"مسح الحالات","record":{"رقم السجل":"SC-000001","تاريخ الإدخال":"2026-09-25","وقت الإدخال":"09:10:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","التاريخ":"2026-09-25","وقت العملية":"10:00","رقم البوليصة":"AWB-880011","الفرع":"المعادي","المستخدم":"منى عبد الله","الحالة قبل التعديل":"قيد التوصيل","الحالة بعد التعديل":"ملغاة","نوع العملية":"مسح","سبب المسح أو التعديل":"طلب العميل الإلغاء","هل توجد موافقة؟":"نعم","نتيجة المراجعة":"مصرح به","حالة المتابعة":"مغلقة","تاريخ الإغلاق":"2026-09-25"}},{"type":"Scrub","typeName":"مسح الحالات","record":{"رقم السجل":"SC-000002","تاريخ الإدخال":"2026-09-20","وقت الإدخال":"07:11:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","التاريخ":"2026-09-25","وقت العملية":"11:30","رقم البوليصة":"AWB-880099","الفرع":"الشيخ زايد","المستخدم":"كريم فتحي","الحالة قبل التعديل":"تم التسليم","الحالة بعد التعديل":"مرتجعة","نوع العملية":"تعديل","سبب المسح أو التعديل":"خطأ إدخال حالة","هل توجد موافقة؟":"لا","نتيجة المراجعة":"مخالفة مؤكدة","تصنيف المخالفة":"تعديل حالة بدون صلاحية","الإجراء المطلوب":"مراجعة الموظف المسؤول","حالة المتابعة":"قيد المتابعة"}},{"type":"Transfer","typeName":"التحويلات","record":{"رقم السجل":"TR-000001","تاريخ الإدخال":"2026-09-21","وقت الإدخال":"08:12:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","تاريخ التحويل":"2026-09-24","رقم التحويل":"TRF-5001","رقم البوليصة":"AWB-990011","الفرع المحول":"القاهرة الجديدة","الفرع المستلم":"مدينة نصر","مسؤول التحويل":"أحمد سالم","تاريخ ووقت الإرسال":"2026-09-24T09:00","تاريخ ووقت الاستلام":"2026-09-24T14:00","حالة التحويل":"منتهي","هل تم التأكيد؟":"نعم","وسيلة التأكيد":"هاتفيًا","وقت التأكيد":"2026-09-24T14:10","مدة الوصول (ساعة)":5,"مدة تأكيد التحويل (ساعة)":0.2,"حالة الالتزام الزمني بالتأكيد (محسوبة)":"ضمن الهدف"}},{"type":"Transfer","typeName":"التحويلات","record":{"رقم السجل":"TR-000002","تاريخ الإدخال":"2026-09-22","وقت الإدخال":"09:13:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","تاريخ التحويل":"2026-09-25","رقم التحويل":"TRF-5002","رقم البوليصة":"AWB-990099","الفرع المحول":"الإسكندرية - محرم بك","الفرع المستلم":"المنصورة","مسؤول التحويل":"هبة الشريف","تاريخ ووقت الإرسال":"2026-09-25T08:00","تاريخ ووقت الاستلام":"2026-09-25T22:00","حالة التحويل":"قيد المتابعة","هل تم التأكيد؟":"لا","وجود مشكلة":"نعم","نوع المشكلة":"شحنة مفقودة","المسؤول عن المتابعة":"منى عبد الله","مدة الوصول (ساعة)":14,"حالة الالتزام الزمني بالتأكيد (محسوبة)":"متجاوز الهدف"}},{"type":"Issues","typeName":"المشاكل اليومية","record":{"رقم السجل":"DI-000001","تاريخ الإدخال":"2026-09-23","وقت الإدخال":"07:14:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","تاريخ الاكتشاف":"2026-09-23","وقت الاكتشاف":"09:00","الفرع":"المعادي","القسم":"التوصيل","مصدر اكتشاف المشكلة":"شكوى عميل","نوع المشكلة":"تأخير تسليم","وصف المشكلة":"تأخر تسليم شحنة حساسة","رقم البوليصة إن وجد":"AWB-770055","عدد الحالات المتأثرة":1,"درجة الأولوية":"منخفضة","المسؤول عن الحل":"أحمد سالم","الإجراء المطلوب":"تواصل فوري مع الفرع","تاريخ الاستحقاق":"2026-09-24","حالة المشكلة":"مغلقة","تاريخ الإغلاق":"2026-09-24","الإجراء التصحيحي":"تم التسليم يدويًا","الإجراء الوقائي":"تنبيه فريق التوصيل","مدة الإغلاق (أيام)":1,"تصنيف الإغلاق (محسوب)":"مغلقة في الموعد"}},{"type":"Issues","typeName":"المشاكل اليومية","record":{"رقم السجل":"DI-000002","تاريخ الإدخال":"2026-09-24","وقت الإدخال":"08:10:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","تاريخ الاكتشاف":"2026-09-20","وقت الاكتشاف":"13:20","الفرع":"طنطا","القسم":"الفرز","مصدر اكتشاف المشكلة":"تدقيق داخلي","نوع المشكلة":"سوء تعامل مع العميل","وصف المشكلة":"خطأ تصنيف شحنات بين فرعين","رقم البوليصة إن وجد":"AWB-770077","عدد الحالات المتأثرة":8,"درجة الأولوية":"متوسطة","المسؤول عن الحل":"كريم فتحي","الإجراء المطلوب":"مراجعة إجراءات الفرز","تاريخ الاستحقاق":"2026-09-22","حالة المشكلة":"متأخرة","سبب التأخير":"انتظار رد الفرع الآخر","تنبيه التأخر":"متأخر","تصنيف الإغلاق (محسوب)":"—"}},{"type":"Penalty","typeName":"الجزاءات","record":{"رقم السجل":"PN-000001","تاريخ الإدخال":"2026-09-25","وقت الإدخال":"09:11:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","تاريخ تسجيل المخالفة":"2026-09-20","تاريخ اعتماد الجزاء":"2026-09-22","الفرع":"مدينة نصر","اسم الموظف":"محمود سيد","الرقم الوظيفي إن وجد":"EMP-0021","نوع المخالفة":"عدم اتباع إجراء","وصف المخالفة":"تأخر متكرر عن مواعيد التسليم","درجة المخالفة":"متوسطة","هل تمت المراجعة؟":"نعم","قرار المراجعة":"مؤكدة","نوع الجزاء المعتمد":"تنبيه شفهي","قيمة الجزاء":200,"جهة الاعتماد":"أحمد سالم","حالة الجزاء":"منفذة","تاريخ التنفيذ":"2026-09-23","القيمة المعتمدة (محسوبة)":200,"القيمة المنفذة فعليًا (محسوبة)":200}},{"type":"Penalty","typeName":"الجزاءات","record":{"رقم السجل":"PN-000002","تاريخ الإدخال":"2026-09-20","وقت الإدخال":"07:12:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","تاريخ تسجيل المخالفة":"2026-09-24","الفرع":"6 أكتوبر","اسم الموظف":"إيمان طه","الرقم الوظيفي إن وجد":"EMP-0034","نوع المخالفة":"تأخير غير مبرر","وصف المخالفة":"عدم الالتزام بإجراءات المسح","درجة المخالفة":"منخفضة","هل تمت المراجعة؟":"لا","حالة الجزاء":"مفتوحة"}},{"type":"Overdue","typeName":"الحالات المتأخرة","record":{"رقم السجل":"DC-000001","تاريخ الإدخال":"2026-09-21","وقت الإدخال":"08:13:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","تاريخ الرصد":"2026-09-05","رقم البوليصة":"AWB-660011","الفرع":"الزقازيق","المحافظة / المنطقة":"القاهرة","المرسل":"شركة الأفق","حالة الشحنة":"متوقفة","تاريخ إنشاء الطلب":"2026-08-30","المسؤول عن المتابعة":"منى عبد الله","الإجراء المطلوب":"تواصل عاجل مع المرسل","حالة الإجراء":"مفتوحة","عمر الطلب بالأيام (من تاريخ إنشاء الطلب)":27,"عمر الحالة بالأيام (من تاريخ الرصد)":27,"عدد أيام التجاوز بعد الاستحقاق":22,"تصنيف التأخير":"أكثر من 20 يومًا"}},{"type":"Overdue","typeName":"الحالات المتأخرة","record":{"رقم السجل":"DC-000002","تاريخ الإدخال":"2026-09-22","وقت الإدخال":"09:14:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","تاريخ الرصد":"2026-09-18","رقم البوليصة":"AWB-660099","الفرع":"أسيوط","المحافظة / المنطقة":"الجيزة","المرسل":"متجر السلام","حالة الشحنة":"معلّقة","تاريخ إنشاء الطلب":"2026-09-16","المسؤول عن المتابعة":"أحمد سالم","حالة الإجراء":"قيد المتابعة","عمر الطلب بالأيام (من تاريخ إنشاء الطلب)":8,"عمر الحالة بالأيام (من تاريخ الرصد)":8,"عدد أيام التجاوز بعد الاستحقاق":3,"تصنيف التأخير":"6–10 أيام"}},{"type":"MorningPickup","typeName":"المطابقة الصباحية - بيك أب","record":{"رقم السجل":"PKM-000001","تاريخ الإدخال":"2026-09-23","وقت الإدخال":"07:10:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","تاريخ المطابقة":"2026-09-25","الفرع":"القاهرة الجديدة","وقت تبليغ الفرع":"08:20","الشحنات المرسلة":120,"الشحنات المستلمة":120,"موظف الاستلام":"أحمد سالم","حالة المتابعة":"مغلقة","تاريخ الإغلاق":"2026-09-25","معرّف الدفعة (Batch ID)":"BATCH-PKM-DEMO-001","نوع المطابقة":"PICKUP","الموعد النهائي (وقت الحفظ)":"11:00","الفرق بين المرسل والمستلم":0,"حالة التبليغ":"في الموعد"}},{"type":"MorningPickup","typeName":"المطابقة الصباحية - بيك أب","record":{"رقم السجل":"PKM-000002","تاريخ الإدخال":"2026-09-24","وقت الإدخال":"08:11:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","تاريخ المطابقة":"2026-09-25","الفرع":"6 أكتوبر","وقت تبليغ الفرع":"09:00","الشحنات المرسلة":95,"الشحنات المستلمة":100,"موظف الاستلام":"منى عبد الله","حالة المتابعة":"قيد المتابعة","معرّف الدفعة (Batch ID)":"BATCH-PKM-DEMO-001","نوع المطابقة":"PICKUP","الموعد النهائي (وقت الحفظ)":"11:00","الفرق بين المرسل والمستلم":-5,"حالة التبليغ":"في الموعد"}},{"type":"MorningPickup","typeName":"المطابقة الصباحية - بيك أب","record":{"رقم السجل":"PKM-000003","تاريخ الإدخال":"2026-09-25","وقت الإدخال":"09:12:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","تاريخ المطابقة":"2026-09-25","الفرع":"الشيخ زايد","وقت تبليغ الفرع":"12:45","الشحنات المرسلة":80,"الشحنات المستلمة":60,"موظف الاستلام":"كريم فتحي","نوع المشكلة":"خطأ في البيانات","تفاصيل المشكلة":"نقص 20 شحنة عن العدد المرسل","سبب التأخير":"ازدحام مروري أخّر تبليغ الفرع","حالة المتابعة":"مفتوحة","معرّف الدفعة (Batch ID)":"BATCH-PKM-DEMO-002","نوع المطابقة":"PICKUP","الموعد النهائي (وقت الحفظ)":"11:00","الفرق بين المرسل والمستلم":20,"حالة التبليغ":"متأخر"}},{"type":"MorningPickup","typeName":"المطابقة الصباحية - بيك أب","record":{"رقم السجل":"PKM-000004","تاريخ الإدخال":"2026-09-20","وقت الإدخال":"07:13:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","تاريخ المطابقة":"2026-09-24","الفرع":"الإسكندرية - سموحة","وقت تبليغ الفرع":"08:00","الشحنات المرسلة":40,"الشحنات المستلمة":40,"نوع المشكلة":"شحنة مفقودة","تفاصيل المشكلة":"شحنات وصلت لفرع غير المقصود، تم تصحيحها","الفرع الخطأ (إن وُجد)":"الإسكندرية - محرم بك","حالة المتابعة":"مغلقة","تاريخ الإغلاق":"2026-09-24","معرّف الدفعة (Batch ID)":"BATCH-PKM-DEMO-003","نوع المطابقة":"PICKUP","الموعد النهائي (وقت الحفظ)":"11:00","الفرق بين المرسل والمستلم":0,"حالة التبليغ":"في الموعد"}},{"type":"MorningReturns","typeName":"المطابقة الصباحية - مرتجعات","record":{"رقم السجل":"RTM-000001","تاريخ الإدخال":"2026-09-21","وقت الإدخال":"08:14:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","تاريخ المطابقة":"2026-09-25","الفرع":"المعادي","وقت تبليغ الفرع":"08:30","الشحنات المرسلة":35,"الشحنات المستلمة":35,"موظف الاستلام":"هبة الشريف","حالة المتابعة":"مغلقة","تاريخ الإغلاق":"2026-09-25","معرّف الدفعة (Batch ID)":"BATCH-RTM-DEMO-001","نوع المطابقة":"RETURNS","الموعد النهائي (وقت الحفظ)":"11:00","الفرق بين المرسل والمستلم":0,"حالة التبليغ":"في الموعد"}},{"type":"MorningReturns","typeName":"المطابقة الصباحية - مرتجعات","record":{"رقم السجل":"RTM-000002","تاريخ الإدخال":"2026-09-22","وقت الإدخال":"09:10:00","المستخدم (مُدخل السجل)":"مستخدم تجريبي","آخر تعديل":"","المستخدم (المعدّل)":"","تاريخ المطابقة":"2026-09-25","الفرع":"المنصورة","وقت تبليغ الفرع":"13:10","الشحنات المرسلة":22,"الشحنات المستلمة":15,"نوع المشكلة":"تأخير تسليم","تفاصيل المشكلة":"مرتجعات ناقصة عن التقرير اليومي","سبب التأخير":"تأخر نقل المرتجعات من المخزن","حالة المتابعة":"مفتوحة","معرّف الدفعة (Batch ID)":"BATCH-RTM-DEMO-002","نوع المطابقة":"RETURNS","الموعد النهائي (وقت الحفظ)":"11:00","الفرق بين المرسل والمستلم":7,"حالة التبليغ":"متأخر"}}],"branches":["القاهرة الجديدة","مدينة نصر","المعادي","6 أكتوبر","الشيخ زايد","الإسكندرية - سموحة","الإسكندرية - محرم بك","المنصورة","طنطا","الزقازيق","أسيوط","المنيا","بني سويف","الفيوم","دمياط"],"rolePermissions":{"Administrator":{"actions":["save","update","viewSearch","viewKpis","viewReports","viewAuditLog","manageBranches","manageEmployees","manageSettings"],"branchScope":"all","canBeAssignedAllBranches":true,"pages":["dashboard","search","reports","settings"]},"Audit Manager":{"actions":["save","update","viewSearch","viewKpis","viewReports","viewAuditLog"],"branchScope":"own","canBeAssignedAllBranches":true,"pages":["dashboard","search","reports","settings"]},"Senior Auditor":{"actions":["save","update","viewSearch","viewKpis","viewReports","viewAuditLog"],"branchScope":"own","canBeAssignedAllBranches":false,"pages":["dashboard","search","reports"]},"Auditor":{"actions":["save","update","viewSearch","viewKpis"],"branchScope":"own","canBeAssignedAllBranches":false,"pages":["dashboard","search"]},"Audit Viewer":{"actions":["viewSearch","viewKpis","viewReports"],"branchScope":"own","canBeAssignedAllBranches":false,"pages":["dashboard","search","reports"]}},"ageBuckets":[[0,5,"0–5 أيام"],[6,10,"6–10 أيام"],[11,15,"11–15 يومًا"],[16,20,"16–20 يومًا"],[21,99999,"أكثر من 20 يومًا"]]};
+
+  // ---- local mutable state for this preview session only (never persisted, never sent anywhere) ----
+  var records = MOCK.records.slice(); // [{type, typeName, record}]
+  var branches = MOCK.branches.map(function (name, i) { return { id: 'BR-' + String(i + 1).padStart(3, '0'), name: name, active: true }; });
+  var employees = [];
+  var auditEntries = [
+    { at: '2026-09-26 08:00:00', username: 'وضع التجربة', action: 'login', result: 'نجاح', details: 'بيانات تجريبية — لا اتصال حقيقي' }
+  ];
+  var nextSeq = { MM: 3, RM: 3, SC: 3, TR: 3, DI: 3, PN: 3, DC: 3, PKM: 5, RTM: 3 };
+
+  function ctByKey(key) { return MOCK.controlTypes.find(function (c) { return c.key === key; }); }
+  function fieldLabel(ct, key) { var f = ct.fields.find(function (x) { return x.key === key; }); return f ? f.label : key; }
+
+  function rowMatches(ct, rec, p) {
+    var filt = ct.filters || {};
+    if (p.dateFrom || p.dateTo) {
+      var dateKey = filt.date;
+      var raw = dateKey && rec[fieldLabel(ct, dateKey)];
+      if (raw) {
+        var d = new Date(raw);
+        if (p.dateFrom && d < new Date(p.dateFrom)) return false;
+        if (p.dateTo && d > new Date(p.dateTo + 'T23:59:59')) return false;
+      } else if (p.dateFrom || p.dateTo) return false;
+    }
+    if (p.branch && filt.branch && filt.branch.length) {
+      var branchOk = filt.branch.some(function (k) { return rec[fieldLabel(ct, k)] === p.branch; });
+      if (!branchOk) return false;
+    }
+    if (p.auditor && filt.auditor) { if (rec[fieldLabel(ct, filt.auditor)] !== p.auditor) return false; }
+    if (p.owner && filt.owner && filt.owner.length) {
+      var ownerOk = filt.owner.some(function (k) { return rec[fieldLabel(ct, k)] === p.owner; });
+      if (!ownerOk) return false;
+    }
+    if (p.status && filt.status && filt.status.length) {
+      var statusOk = filt.status.some(function (k) { return rec[fieldLabel(ct, k)] === p.status; });
+      if (!statusOk) return false;
+    }
+    if (p.priority && filt.priority) { if (rec[fieldLabel(ct, filt.priority)] !== p.priority) return false; }
+    return true;
+  }
+
+  function aggregateType(ct, rows) {
+    var total = rows.length;
+    var agg = { total: total };
+    function val(rec, key) { return rec[fieldLabel(ct, key)]; }
+    function count(key, value) { return rows.filter(function (r) { return val(r, key) === value; }).length; }
+    if (ct.key === 'Morning') {
+      var matched = rows.reduce(function (s, r) { return s + (Number(val(r, 'matched_shipments')) || 0); }, 0);
+      var totalShip = rows.reduce(function (s, r) { return s + (Number(val(r, 'total_shipments')) || 0); }, 0);
+      agg.matched = matched; agg.matchPct = totalShip ? (matched / totalShip * 100) : null; agg.target = MOCK.targets.target_MorningMatchPct;
+    } else if (ct.key === 'Returns') {
+      agg.matched = count('match_status', 'مطابق'); agg.unmatched = count('match_status', 'غير مطابق');
+      agg.matchPct = total ? (agg.matched / total * 100) : null; agg.target = MOCK.targets.target_ReturnsMatchPct;
+    } else if (ct.key === 'Scrub') {
+      agg.underReview = count('review_result', 'قيد المراجعة'); agg.authorized = count('review_result', 'مصرح به');
+      agg.confirmedViolations = count('review_result', 'مخالفة مؤكدة');
+    } else if (ct.key === 'Transfer') {
+      agg.confirmed = count('confirmed', 'نعم');
+      agg.late = rows.filter(function (r) { return String(val(r, 'sla_status') || '').indexOf('متجاوز') !== -1; }).length;
+      agg.compliancePct = total ? ((total - agg.late) / total * 100) : null; agg.target = MOCK.targets.target_TransferConfirmHrs;
+    } else if (ct.key === 'Issues') {
+      agg.open = count('status', 'مفتوحة') + count('status', 'قيد المتابعة'); agg.closed = count('status', 'مغلقة');
+      var onTime = rows.filter(function (r) { return val(r, 'close_classification') === 'مغلقة في الموعد' || (r['تصنيف الإغلاق (محسوب)'] === 'مغلقة في الموعد'); }).length;
+      agg.late = rows.filter(function (r) { return (r['تنبيه التأخر'] || '') === 'متأخر'; }).length;
+      agg.onTimeClosePct = agg.closed ? (onTime / agg.closed * 100) : null; agg.target = MOCK.targets.target_IssueCloseDays;
+    } else if (ct.key === 'Penalty') {
+      agg.violations = total; agg.approved = count('status', 'معتمدة'); agg.executed = count('status', 'منفذة');
+      agg.totalValue = rows.reduce(function (s, r) { return s + (Number(r['القيمة المنفذة فعليًا (محسوبة)']) || Number(val(r,'penalty_value')) || 0); }, 0);
+    } else if (ct.key === 'Overdue') {
+      agg.withinTarget = rows.filter(function (r) { return (Number(r['عدد أيام التجاوز بعد الاستحقاق']) || 0) <= 0; }).length;
+      agg.overdue = total - agg.withinTarget;
+      agg.over15 = rows.filter(function (r) { return (Number(r['عدد أيام التجاوز بعد الاستحقاق']) || 0) > 15; }).length;
+      agg.over20 = rows.filter(function (r) { return (Number(r['عدد أيام التجاوز بعد الاستحقاق']) || 0) > 20; }).length;
+      agg.targetDays = MOCK.targets.target_CaseAgeDays;
+    }
+    return agg;
+  }
+
+  function describeFilters(p) {
+    var parts = [];
+    if (p.dateFrom || p.dateTo) parts.push('الفترة: ' + (p.dateFrom || 'بداية البيانات') + ' → ' + (p.dateTo || 'اليوم'));
+    if (p.branch) parts.push('الفرع: ' + p.branch);
+    if (p.type) parts.push('نوع الرقابة: ' + p.type);
+    if (p.auditor) parts.push('المدقق/المستخدم: ' + p.auditor);
+    if (p.owner) parts.push('المسؤول: ' + p.owner);
+    if (p.status) parts.push('الحالة: ' + p.status);
+    if (p.priority) parts.push('الأولوية: ' + p.priority);
+    return parts.length ? parts.join(' | ') : 'بدون فلاتر (وضع التجربة — بيانات تجريبية)';
+  }
+
+  function uuidLike() { return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }); }
+  function nowStr() { var d = new Date(); return d.toISOString().slice(0, 19).replace('T', ' '); }
+  function today() { return new Date().toISOString().slice(0, 10); }
+
+  // ================= MOCK GET (api) =================
+  async function mockApi(action, params) {
+    params = params || {};
+    await new Promise(function (r) { setTimeout(r, 120); }); // small delay so loading states are visible/testable
+    if (action === 'bootstrap') {
+      return {
+        ok: true, controlTypes: MOCK.controlTypes, lists: MOCK.lists, targets: MOCK.targets,
+        authEnabled: false, employeesBootstrapNeeded: false, rolePermissions: MOCK.rolePermissions || {}
+      };
+    }
+    if (action === 'settings') {
+      return { ok: true, lists: MOCK.lists, targets: MOCK.targets, ageBuckets: MOCK.ageBuckets || [] };
+    }
+    if (action === 'myBranches') {
+      return { ok: true, branches: branches.filter(function (b) { return b.active; }).map(function (b) { return b.name; }) };
+    }
+    if (action === 'kpis') {
+      var typeKeys = params.type ? [params.type] : MOCK.controlTypes.map(function (c) { return c.key; });
+      var byType = {};
+      MOCK.controlTypes.forEach(function (ct) {
+        if (typeKeys.indexOf(ct.key) === -1) return;
+        var rows = records.filter(function (r) { return r.type === ct.key && rowMatches(ct, r.record, params); }).map(function (r) { return r.record; });
+        byType[ct.key] = aggregateType(ct, rows);
+      });
+      return { ok: true, targets: MOCK.targets, filtersApplied: describeFilters(params), byType: byType };
+    }
+    if (action === 'search') {
+      var typeKeys2 = params.type ? [params.type] : MOCK.controlTypes.map(function (c) { return c.key; });
+      var q = (params.q || '').toString().trim();
+      var page = Math.max(1, parseInt(params.page, 10) || 1);
+      var pageSize = Math.min(100, Math.max(1, parseInt(params.pageSize, 10) || 25));
+      var all = [];
+      records.forEach(function (r) {
+        if (typeKeys2.indexOf(r.type) === -1) return;
+        var ct = ctByKey(r.type);
+        if (!rowMatches(ct, r.record, params)) return;
+        if (q && JSON.stringify(r.record).indexOf(q) === -1) return;
+        all.push(r);
+      });
+      var total = all.length, start = (page - 1) * pageSize;
+      return { ok: true, count: total, page: page, pageSize: pageSize, totalPages: Math.max(1, Math.ceil(total / pageSize)), results: all.slice(start, start + pageSize) };
+    }
+    if (action === 'getRecord') {
+      var found = records.find(function (r) { return r.type === params.type && r.record['رقم السجل'] === params.id; });
+      if (!found) return { ok: false, error: 'السجل غير موجود: ' + params.id + ' (وضع تجربة — بيانات تجريبية فقط).' };
+      return { ok: true, record: found.record };
+    }
+    if (action === 'reports') {
+      function snapshot(p) {
+        var byTypeR = {}, byBranch = {}, openActions = [], grandTotal = 0, confirmedViolations = 0, overdueCount = 0;
+        MOCK.controlTypes.forEach(function (ct) {
+          if (p.morningMatchingType === 'PICKUP' && ct.key === 'MorningReturns') { byTypeR[ct.key] = { name: ct.name, count: 0 }; return; }
+          if (p.morningMatchingType === 'RETURNS' && ct.key === 'MorningPickup') { byTypeR[ct.key] = { name: ct.name, count: 0 }; return; }
+          var rows = records.filter(function (r) { return r.type === ct.key && rowMatches(ct, r.record, p); }).map(function (r) { return r.record; });
+          byTypeR[ct.key] = { name: ct.name, count: rows.length };
+          grandTotal += rows.length;
+          (ct.filters.branch || []).forEach(function (bk) {
+            var label = fieldLabel(ct, bk);
+            rows.forEach(function (r) { var b = r[label]; if (b) byBranch[b] = (byBranch[b] || 0) + 1; });
+          });
+          var agg = aggregateType(ct, rows);
+          if (ct.key === 'Scrub') confirmedViolations += agg.confirmedViolations || 0;
+          if (ct.key === 'Overdue') overdueCount += agg.overdue || 0;
+          var ownerCols = ct.filters.owner || [], statusCols = ct.filters.status || [];
+          if (ownerCols.length && statusCols.length) {
+            var ownerLabel = fieldLabel(ct, ownerCols[0]), statusLabel = fieldLabel(ct, statusCols[0]);
+            rows.forEach(function (r) {
+              var status = r[statusLabel];
+              if (status && status !== 'مغلقة' && status !== 'منفذة' && status !== 'معتمدة') {
+                openActions.push({ type: ct.name, recordId: r['رقم السجل'], owner: r[ownerLabel] || '—', status: status });
+              }
+            });
+          }
+        });
+        return { grandTotal: grandTotal, byType: byTypeR, byBranch: byBranch, confirmedViolations: confirmedViolations, overdueCount: overdueCount, openActions: openActions.slice(0, 500), openActionsTotal: openActions.length };
+      }
+      var current = snapshot(params);
+      var result = { ok: true, period: { dateFrom: params.dateFrom || null, dateTo: params.dateTo || null }, filtersApplied: describeFilters(params), generatedAt: nowStr(), current: current };
+      if (params.comparePrev === '1' && params.dateFrom && params.dateTo) {
+        result.previousPeriod = { dateFrom: params.dateFrom, dateTo: params.dateTo };
+        result.previous = snapshot(params);
+      }
+      return result;
+    }
+    return { ok: false, error: 'إجراء غير معروف في وضع التجربة (' + action + ').' };
+  }
+
+  // ================= MOCK POST (apiPost) =================
+  async function mockApiPost(body) {
+    await new Promise(function (r) { setTimeout(r, 150); });
+    var action = body.action;
+    if (action === 'save') {
+      var ct = ctByKey(body.type);
+      if (!ct) return { ok: false, error: 'نوع رقابة غير معروف: ' + body.type };
+      var prefix = (({ Morning: 'MM', Returns: 'RM', Scrub: 'SC', Transfer: 'TR', Issues: 'DI', Penalty: 'PN', Overdue: 'DC' })[body.type]) || 'REC';
+      var id = prefix + '-' + String(++nextSeq[prefix]).padStart(6, '0');
+      var recObj = { 'رقم السجل': id, 'تاريخ الإدخال': today(), 'وقت الإدخال': nowStr().slice(11), 'المستخدم (مُدخل السجل)': body.user || 'وضع التجربة' };
+      ct.fields.forEach(function (f) { if (body.data && body.data.hasOwnProperty(f.key)) recObj[f.label] = body.data[f.key]; });
+      records.push({ type: body.type, typeName: ct.name, record: recObj });
+      return { ok: true, recordId: id, type: ct.key, typeName: ct.name, sheet: ct.sheet, savedAt: nowStr(), message: 'تم حفظ السجل رقم ' + id + ' بنجاح (وضع تجربة — لم يُحفظ في أي نظام حقيقي).' };
+    }
+    if (action === 'saveMorningBatch') {
+      var ct2 = ctByKey(body.type);
+      if (!ct2 || (ct2.key !== 'MorningPickup' && ct2.key !== 'MorningReturns')) return { ok: false, error: 'نوع غير صحيح لهذه العملية.' };
+      var prefix2 = ct2.key === 'MorningPickup' ? 'PKM' : 'RTM';
+      var batchId = uuidLike();
+      var written = [];
+      (body.rows || []).forEach(function (row) {
+        var id2 = prefix2 + '-' + String(++nextSeq[prefix2]).padStart(6, '0');
+        var recObj2 = { 'رقم السجل': id2, 'تاريخ الإدخال': today(), 'وقت الإدخال': nowStr().slice(11), 'المستخدم (مُدخل السجل)': 'وضع التجربة', 'اسم المدقق': 'وضع التجربة' };
+        ct2.fields.forEach(function (f) { if (row.data && row.data.hasOwnProperty(f.key)) recObj2[f.label] = row.data[f.key]; });
+        recObj2[fieldLabel(ct2, 'branch')] = row.branch;
+        recObj2[fieldLabel(ct2, 'batch_id')] = batchId;
+        recObj2[fieldLabel(ct2, 'matching_type')] = ct2.key === 'MorningPickup' ? 'PICKUP' : 'RETURNS';
+        recObj2[fieldLabel(ct2, 'deadline_snapshot')] = MOCK.targets.morning_matching_deadline;
+        var sent = Number(row.data && row.data.sent_shipments) || 0, recv = Number(row.data && row.data.received_shipments) || 0;
+        var diffLabel = ct2.computed.find(function (c) { return c.key === 'shipment_difference'; }).label;
+        recObj2[diffLabel] = sent - recv;
+        var notifLabel = ct2.computed.find(function (c) { return c.key === 'notification_status'; }).label;
+        recObj2[notifLabel] = 'في الموعد';
+        records.push({ type: ct2.key, typeName: ct2.name, record: recObj2 });
+        written.push({ id: id2, branch: row.branch });
+      });
+      return { ok: true, batchId: batchId, type: ct2.key, typeName: ct2.name, sheet: ct2.sheet, savedAt: nowStr(), recordIds: written.map(function (w) { return w.id; }), branches: written.map(function (w) { return w.branch; }), message: 'تم حفظ ' + written.length + ' سجل بنجاح — Batch ID: ' + batchId + ' (وضع تجربة — لم يُحفظ في أي نظام حقيقي).' };
+    }
+    if (action === 'update') {
+      var found2 = records.find(function (r) { return r.type === body.type && r.record['رقم السجل'] === body.id; });
+      if (!found2) return { ok: false, error: 'السجل غير موجود: ' + body.id };
+      var ct3 = ctByKey(body.type);
+      ct3.fields.forEach(function (f) { if (body.data && body.data.hasOwnProperty(f.key)) found2.record[f.label] = body.data[f.key]; });
+      return { ok: true, recordId: body.id, message: 'تم تعديل السجل رقم ' + body.id + ' بنجاح (وضع تجربة).' };
+    }
+    if (action === 'login') return { ok: true, token: 'mock-token', employeeId: 'EMP-DEMO', fullName: 'وضع التجربة', role: 'Administrator', branches: 'ALL' };
+    if (action === 'logout') return { ok: true };
+    if (action === 'bootstrapAdmin') return { ok: true, message: 'وضع تجربة — لا يُنشئ أي حساب حقيقي.' };
+    if (action === 'listBranches') return { ok: true, branches: branches };
+    if (action === 'addBranch') {
+      if (branches.some(function (b) { return b.name === body.name; })) return { ok: false, error: 'اسم الفرع مستخدم بالفعل.' };
+      var nb = { id: 'BR-' + String(branches.length + 1).padStart(3, '0'), name: body.name, active: true };
+      branches.push(nb); return { ok: true, message: 'تمت إضافة الفرع (وضع تجربة).' };
+    }
+    if (action === 'renameBranch') {
+      var b1 = branches.find(function (x) { return x.id === body.id; }); if (!b1) return { ok: false, error: 'فرع غير موجود.' };
+      b1.name = body.name; return { ok: true, message: 'تمت إعادة التسمية (وضع تجربة).' };
+    }
+    if (action === 'toggleBranch') {
+      var b2 = branches.find(function (x) { return x.id === body.id; }); if (!b2) return { ok: false, error: 'فرع غير موجود.' };
+      b2.active = !!body.active; return { ok: true, message: 'تم تحديث حالة الفرع (وضع تجربة).' };
+    }
+    if (action === 'listEmployees') return { ok: true, employees: employees };
+    if (action === 'addEmployee') {
+      var ne = { id: 'EMP-' + String(employees.length + 1).padStart(4, '0'), fullName: body.data.fullName, username: body.data.username, role: body.data.role, branches: body.data.branches, status: 'نشط', lastLogin: '' };
+      employees.push(ne); return { ok: true, message: 'تمت إضافة الموظف (وضع تجربة).' };
+    }
+    if (action === 'updateEmployee') {
+      var e1 = employees.find(function (x) { return x.id === body.id; }); if (!e1) return { ok: false, error: 'موظف غير موجود.' };
+      Object.assign(e1, body.data || {}); return { ok: true, message: 'تم حفظ التعديل (وضع تجربة).' };
+    }
+    if (action === 'toggleEmployee') {
+      var e2 = employees.find(function (x) { return x.id === body.id; }); if (!e2) return { ok: false, error: 'موظف غير موجود.' };
+      e2.status = body.active ? 'نشط' : 'معطل'; return { ok: true, message: 'تم تحديث حالة الموظف (وضع تجربة).' };
+    }
+    if (action === 'auditLog') return { ok: true, entries: auditEntries };
+    if (action === 'migrationPreviewBranches') return { ok: true, entries: [], totals: {}, note: 'وضع تجربة — لا هجرة فعلية.' };
+    return { ok: false, error: 'إجراء غير معروف في وضع التجربة (' + action + ').' };
+  }
+
+  // ---- swap in the mock transport; every existing Dashboard function is untouched ----
+  window.api = mockApi;
+  window.apiPost = mockApiPost;
+
+  // ---- bypass the connection-config screen and boot straight into the app with mock data ----
+  API_URL = 'mock://arrive-preview';
+  USER_NAME = 'وضع التجربة';
+  document.getElementById('configScreen').classList.add('hidden');
+  document.getElementById('loginScreen').classList.add('hidden');
+
+  // ---- visible "this is sample data" banner, per the required preview-mode labeling ----
+  function addPreviewBanner() {
+    var b = document.createElement('div');
+    b.id = 'previewModeBanner';
+    b.style.cssText = 'background:#F2A600;color:#3a2c00;text-align:center;font-weight:700;font-size:13px;padding:7px 10px;';
+    b.textContent = '⚠️ وضع التجربة — بيانات تجريبية (لا اتصال حقيقي بأي خادم أو Google Sheets)';
+    document.body.insertBefore(b, document.body.firstChild);
+  }
+  addPreviewBanner();
+
+  init();
+})();
+
 </script>
 </body>
 </html>
