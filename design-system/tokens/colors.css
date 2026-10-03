@@ -1,0 +1,61 @@
+:root{
+/* Brand palette — official V2.0 */
+--arrive-blue:#0837C9;
+--arrive-teal:#00C7E6;
+--arrive-navy:#0F172A;
+--arrive-light-blue:#E6F4FF;
+--arrive-white:#FFFFFF;
+--arrive-gray:#64748B;
+/* Derived tints/shades of the brand palette (for hover/press/lines only) */
+--arrive-blue-700:#062BA0;
+--arrive-blue-800:#05237F;
+--arrive-blue-900:#0A1E6B;
+--arrive-blue-50:#F2F8FF;
+--arrive-teal-600:#00A9C4;
+--arrive-teal-50:#E0F9FD;
+--gray-50:#F8FAFC;
+--gray-100:#F1F5F9;
+--gray-200:#E2E8F0;
+--gray-300:#CBD5E1;
+--gray-400:#94A3B8;
+--gray-500:#64748B;
+--gray-700:#334155;
+/* Operational status — separate from brand; always pair with text/icon */
+--status-success:#22C55E;
+--status-in-progress:#3B82F6;
+--status-under-action:#F59E0B;
+--status-violation:#EF4444; /* V2.0: «مخالفة / حرجة» — one status; «حرج» uses this token */
+--status-closed:#64748B;
+--status-success-bg:#DCFCE7;
+--status-in-progress-bg:#DBEAFE;
+--status-under-action-bg:#FEF3C7;
+--status-violation-bg:#FEE2E2;
+--status-closed-bg:#F1F5F9;
+--status-success-fg:#15803D;
+--status-in-progress-fg:#1D4ED8;
+--status-under-action-fg:#B45309;
+--status-violation-fg:#B91C1C; /* text-on-tint for contrast only — not a status color */
+--status-closed-fg:#475569;
+/* Semantic aliases */
+--text-primary:var(--arrive-navy);
+--text-secondary:var(--arrive-gray);
+--text-muted:var(--gray-400);
+--text-on-brand:var(--arrive-white);
+--text-link:var(--arrive-blue);
+--text-accent:var(--arrive-teal);
+--surface-page:#F4F8FD;
+--surface-card:var(--arrive-white);
+--surface-subtle:var(--arrive-light-blue);
+--surface-brand:var(--arrive-blue);
+--surface-dark:var(--arrive-navy);
+--surface-sidebar:var(--arrive-navy);
+--border-default:var(--gray-200);
+--border-strong:var(--gray-300);
+--border-brand:var(--arrive-blue);
+--focus-ring:rgba(0,199,230,.45);
+--table-header-bg:var(--arrive-blue);
+--table-header-fg:var(--arrive-white);
+--overlay-blue:rgba(8,55,201,.78);
+--overlay-blue-soft:rgba(8,55,201,.55);
+--overlay-navy:rgba(15,23,42,.6);
+}

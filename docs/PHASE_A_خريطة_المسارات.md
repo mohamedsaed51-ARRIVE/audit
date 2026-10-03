@@ -13,3 +13,6 @@
 | `dashboard/test_*.js` | `tests/` |
 
 حالة البيانات: راجع `data/README.md`.
+
+## النشر (Vercel / GitHub Pages)
+`index.html` في جذر المشروع ملف توجيه صغير فقط (بلا أي منطق) يحوّل إلى `app/index.html`، حتى يعمل رابط النشر الرئيسي دون تغيير إعدادات المنصة. البديل: ضبط Root Directory على `app` في إعدادات المنصة.

@@ -1,0 +1,4 @@
+/* Cairo (Arabic) + Inter (English/numbers) — loaded from Google Fonts (no font binaries were supplied). */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+/* Icon font — Font Awesome 6 Free (Solid) is the closest CDN match to the filled glyphs on the brand board. */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css');

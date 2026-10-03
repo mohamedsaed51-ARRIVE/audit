@@ -1,0 +1,4 @@
+body{font-family:var(--font-ui);color:var(--text-primary);-webkit-font-smoothing:antialiased}
+a{color:var(--text-link);text-decoration:none}
+a:hover{color:var(--arrive-blue-700);text-decoration:underline}
+[dir="rtl"] .arrive-num,.arrive-num{font-family:var(--font-numeric);font-variant-numeric:tabular-nums}

@@ -6,77 +6,413 @@
 <title>ARRIVE AUDIT CONTROL TOWER</title>
 <!-- Minimal inline favicon added only for static-hosting hygiene (avoids the browser's automatic
      /favicon.ico 404 request on GitHub Pages). No visual/design/business-logic change. -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='16' fill='%231B2A4A'/%3E%3Ctext x='50' y='68' font-size='60' text-anchor='middle' fill='%23FF6B35' font-family='Arial, sans-serif'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='16' fill='%230837C9'/%3E%3Ctext x='50' y='68' font-size='60' text-anchor='middle' fill='%23FFFFFF' font-family='Arial, sans-serif'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Inter:wght@300;400;600;700;800&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
-  :root {
-    --navy: #1B2A4A; --orange: #FF6B35; --green: #1E8E3E; --red: #D93025;
-    --yellow: #F2A600; --bg: #F4F6F9; --card: #FFFFFF; --gray: #5F6368;
-  }
+/* ARRIVE-TOKENS:BEGIN (source: ../design-system/tokens/*.css — approved ARRIVE Design System V2.0) */
+:root{
+/* Brand palette — official V2.0 */
+--arrive-blue:#0837C9;
+--arrive-teal:#00C7E6;
+--arrive-navy:#0F172A;
+--arrive-light-blue:#E6F4FF;
+--arrive-white:#FFFFFF;
+--arrive-gray:#64748B;
+/* Derived tints/shades of the brand palette (for hover/press/lines only) */
+--arrive-blue-700:#062BA0;
+--arrive-blue-800:#05237F;
+--arrive-blue-900:#0A1E6B;
+--arrive-blue-50:#F2F8FF;
+--arrive-teal-600:#00A9C4;
+--arrive-teal-50:#E0F9FD;
+--gray-50:#F8FAFC;
+--gray-100:#F1F5F9;
+--gray-200:#E2E8F0;
+--gray-300:#CBD5E1;
+--gray-400:#94A3B8;
+--gray-500:#64748B;
+--gray-700:#334155;
+/* Operational status — separate from brand; always pair with text/icon */
+--status-success:#22C55E;
+--status-in-progress:#3B82F6;
+--status-under-action:#F59E0B;
+--status-violation:#EF4444; /* V2.0: «مخالفة / حرجة» — one status; «حرج» uses this token */
+--status-closed:#64748B;
+--status-success-bg:#DCFCE7;
+--status-in-progress-bg:#DBEAFE;
+--status-under-action-bg:#FEF3C7;
+--status-violation-bg:#FEE2E2;
+--status-closed-bg:#F1F5F9;
+--status-success-fg:#15803D;
+--status-in-progress-fg:#1D4ED8;
+--status-under-action-fg:#B45309;
+--status-violation-fg:#B91C1C; /* text-on-tint for contrast only — not a status color */
+--status-closed-fg:#475569;
+/* Semantic aliases */
+--text-primary:var(--arrive-navy);
+--text-secondary:var(--arrive-gray);
+--text-muted:var(--gray-400);
+--text-on-brand:var(--arrive-white);
+--text-link:var(--arrive-blue);
+--text-accent:var(--arrive-teal);
+--surface-page:#F4F8FD;
+--surface-card:var(--arrive-white);
+--surface-subtle:var(--arrive-light-blue);
+--surface-brand:var(--arrive-blue);
+--surface-dark:var(--arrive-navy);
+--surface-sidebar:var(--arrive-navy);
+--border-default:var(--gray-200);
+--border-strong:var(--gray-300);
+--border-brand:var(--arrive-blue);
+--focus-ring:rgba(0,199,230,.45);
+--table-header-bg:var(--arrive-blue);
+--table-header-fg:var(--arrive-white);
+--overlay-blue:rgba(8,55,201,.78);
+--overlay-blue-soft:rgba(8,55,201,.55);
+--overlay-navy:rgba(15,23,42,.6);
+}
+
+:root{
+--font-arabic:'Cairo',system-ui,sans-serif;
+--font-latin:'Inter',system-ui,sans-serif;
+--font-ui:'Cairo','Inter',system-ui,sans-serif;
+--font-numeric:'Inter','Cairo',system-ui,sans-serif;
+--font-mono:'JetBrains Mono',ui-monospace,monospace;
+--fw-light:300; /* @kind font */
+--fw-regular:400; /* @kind font */
+--fw-semibold:600; /* @kind font */
+--fw-bold:700; /* @kind font */
+--fw-black:800; /* @kind font */
+/* Screen scale (px). Print scale from V2.0: title 28–32pt, section 18–22pt, body 10–12pt, caption 8–10pt */
+--fs-display:48px;
+--fs-kpi:34px;
+--fs-title:30px;
+--fs-section:20px;
+--fs-subtitle:16px;
+--fs-body:14px;
+--fs-small:13px;
+--fs-caption:12px;
+--fs-micro:11px;
+--lh-tight:1.2; /* @kind font */
+--lh-snug:1.35; /* @kind font */
+--lh-body:1.6; /* @kind font */
+--text-title:var(--fw-bold) var(--fs-title)/var(--lh-tight) var(--font-ui);
+--text-section:var(--fw-bold) var(--fs-section)/var(--lh-snug) var(--font-ui);
+--text-body:var(--fw-regular) var(--fs-body)/var(--lh-body) var(--font-ui);
+--text-caption:var(--fw-regular) var(--fs-caption)/var(--lh-snug) var(--font-ui);
+--text-kpi:var(--fw-bold) var(--fs-kpi)/1 var(--font-numeric);
+}
+
+:root{
+--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;
+--radius-xs:4px;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-xl:20px;--radius-pill:999px;
+--shadow-xs:0 1px 2px rgba(15,23,42,.06);
+--shadow-card:0 1px 3px rgba(15,23,42,.06),0 4px 14px rgba(8,55,201,.06);
+--shadow-raised:0 8px 24px rgba(15,23,42,.12);
+--shadow-focus:0 0 0 3px var(--focus-ring);
+--control-h-sm:32px;--control-h-md:40px;--control-h-lg:48px;
+--sidebar-w:240px;--header-h:64px;
+--ease-standard:cubic-bezier(.2,.0,.0,1); /* @kind other */
+--dur-fast:120ms; /* @kind other */
+--dur-base:200ms; /* @kind other */
+--dur-slow:320ms; /* @kind other */
+}
+
+/* ARRIVE V1.1 — structural scales. Values reuse the existing palette/type; nothing here is a new brand decision. */
+:root{
+/* Breakpoints (min-width). Use in media queries as literals; tokens document the contract. */
+--bp-sm:640px; /* @kind other */
+--bp-md:900px; /* @kind other */
+--bp-lg:1200px; /* @kind other */
+--bp-xl:1440px; /* @kind other */
+/* Chart series — brand first, neutrals after. Status colours only when the series IS a status. */
+--chart-1:var(--arrive-blue);
+--chart-2:var(--arrive-teal);
+--chart-3:var(--arrive-navy);
+--chart-4:var(--gray-400);
+--chart-5:var(--gray-300);
+--chart-highlight:var(--arrive-teal);
+--chart-target:var(--arrive-teal-600);
+--chart-grid:var(--gray-200);
+--chart-axis:var(--border-strong);
+--chart-label:var(--text-secondary);
+/* Slide scale (1280×720 canvas) */
+--slide-fs-display:60px;
+--slide-fs-title:44px;
+--slide-fs-kpi:64px;
+--slide-fs-lead:34px;
+--slide-fs-body:26px;
+--slide-fs-table:22px;
+--slide-fs-subtitle:22px;
+--slide-fs-caption:18px;
+--slide-fs-footer:15px;
+--slide-pad-x:56px;
+--slide-footer-h:52px;
+/* Print scale (Word / PDF, from Official V2.0) */
+--print-fs-title:30pt; /* @kind font */
+--print-fs-section:18pt; /* @kind font */
+--print-fs-subsection:14pt; /* @kind font */
+--print-fs-body:11pt; /* @kind font */
+--print-fs-table:10pt; /* @kind font */
+--print-fs-caption:9pt; /* @kind font */
+--print-fs-footer:8pt; /* @kind font */
+--print-margin-x:56px;
+--print-footer-h:46px;
+/* Border widths */
+--bw-hairline:1px;
+--bw-strong:2px;
+--bw-focus:3px;
+--bw-accent:4px;
+/* Icon sizes */
+--icon-xs:12px;
+--icon-sm:14px;
+--icon-md:16px;
+--icon-lg:20px;
+--icon-xl:24px;
+--icon-disc:52px;
+/* Z-index */
+--z-base:0; /* @kind other */
+--z-sticky:5; /* @kind other */
+--z-header:10; /* @kind other */
+--z-dropdown:20; /* @kind other */
+--z-drawer:30; /* @kind other */
+--z-modal:40; /* @kind other */
+--z-toast:50; /* @kind other */
+/* Number & date formatting rules — implemented by ArriveFormat (components/data/Num.jsx) */
+--fmt-digits:"latin"; /* @kind other */
+--fmt-thousands:","; /* @kind other */
+--fmt-decimal:"."; /* @kind other */
+--fmt-decimals-percent:1; /* @kind other */
+--fmt-decimals-currency:2; /* @kind other */
+--fmt-currency-symbol:"ج.م"; /* @kind other */
+--fmt-sign-positive:"+"; /* @kind other */
+--fmt-minus-delta:"\2212"; /* @kind other */
+--fmt-minus-amount:"-"; /* @kind other */
+--fmt-unit-points:"نقطة"; /* @kind other */
+--fmt-date-data:"yyyy-mm-dd"; /* @kind other */
+--fmt-date-prose:"d MMMM yyyy"; /* @kind other */
+}
+
+body{font-family:var(--font-ui);color:var(--text-primary);-webkit-font-smoothing:antialiased}
+a{color:var(--text-link);text-decoration:none}
+a:hover{color:var(--arrive-blue-700);text-decoration:underline}
+[dir="rtl"] .arrive-num,.arrive-num{font-family:var(--font-numeric);font-variant-numeric:tabular-nums}
+
+/* ARRIVE-TOKENS:END */
+  /* ===== ARRIVE component styles (use tokens only) ===== */
+  /* Legacy aliases kept so existing inline var() references resolve to approved tokens */
+  :root { --navy: var(--arrive-navy); --gray: var(--arrive-gray); --red: var(--status-violation); --green: var(--status-success); --yellow: var(--status-under-action); --bg: var(--surface-page); --card: var(--surface-card); }
   * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Tahoma, Arial, sans-serif; background: var(--bg); margin: 0; color: #222; }
-  header { background: var(--navy); color: #fff; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-  header h1 { font-size: 19px; margin: 0; }
-  header .user-box { font-size: 12px; display: flex; align-items: center; gap: 10px; opacity: .95; }
-  nav { display: flex; gap: 6px; padding: 8px 24px; background: #fff; border-bottom: 1px solid #e2e5ea; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,.08); }
-  nav button { background: none; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--navy); font-weight: 600; }
-  nav button.active, nav button:hover { background: var(--navy); color: #fff; }
-  main { padding: 18px 24px; max-width: 1280px; margin: 0 auto; }
-  .card { background: var(--card); border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 14px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr)); gap: 12px; }
-  .kpi { border-radius: 12px; padding: 14px 16px; color: #fff; }
-  .kpi h3 { margin: 0 0 6px; font-size: 12.5px; font-weight: 600; opacity: .92; }
-  .kpi .sub { font-size: 12px; opacity: .9; margin-top: 3px; }
-  .summary-tile { text-align: center; padding: 14px 8px; border-radius: 10px; background: #F0F2F6; }
-  .summary-tile .num { font-size: 24px; font-weight: 800; color: var(--navy); }
-  .summary-tile .lbl { font-size: 12px; color: var(--gray); margin-top: 2px; }
-  .home-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px,1fr)); gap: 14px; margin-top: 14px; }
-  .home-actions .btn-lg { background: var(--card); border: 2px solid var(--navy); border-radius: 14px; padding: 22px 8px; text-align: center; cursor: pointer; font-size: 15px; font-weight: 700; color: var(--navy); }
-  .home-actions .btn-lg:hover { background: var(--navy); color: #fff; }
-  .type-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap: 10px; }
-  .type-card { border: 2px solid #dde2ea; border-radius: 12px; padding: 16px 8px; text-align: center; cursor: pointer; font-weight: 600; color: var(--navy); font-size: 13.5px; }
-  .type-card:hover, .type-card.sel { border-color: var(--orange); background: #FFF6F0; }
-  .branch-chip-row { display: flex; flex-wrap: wrap; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; -webkit-overflow-scrolling: touch; }
-  .branch-chip { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid #ccd3de; border-radius: 20px; padding: 7px 14px; font-size: 12.5px; font-weight: 600; color: var(--navy); cursor: pointer; white-space: nowrap; background: #fff; }
+  body { font-family: var(--font-ui); font-size: var(--fs-body); line-height: var(--lh-body); background: var(--surface-page); margin: 0; color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+  .num, .arrive-num, td.n, .kpi .val, .summary-tile .num { font-family: var(--font-numeric); font-variant-numeric: tabular-nums; }
+  i.fa-solid, i.fa-regular { font-size: var(--icon-md); line-height: 1; }
+  :focus-visible { outline: none; box-shadow: var(--shadow-focus); border-radius: var(--radius-sm); }
+
+  /* App shell: right-hand navy sidebar (RTL), header, content, footer */
+  #appShell { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); grid-template-rows: auto 1fr auto; grid-template-areas: "nav head" "nav main" "nav foot"; min-height: 100vh; }
+  #appShell > nav { grid-area: nav; background: var(--surface-sidebar); color: var(--text-on-brand); display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4) var(--space-3); position: sticky; top: 0; height: 100vh; overflow-y: auto; align-self: start; z-index: var(--z-header); }
+  #appShell > header { grid-area: head; background: var(--surface-card); color: var(--text-primary); height: var(--header-h); padding: 0 var(--space-6); display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); border-bottom: 1px solid var(--border-default); position: sticky; top: 0; z-index: var(--z-sticky); }
+  #appShell > main { grid-area: main; padding: var(--space-6); width: 100%; max-width: 1280px; margin: 0 auto; }
+  #appShell > .footer-note { grid-area: foot; }
+  .brand { display: flex; align-items: center; justify-content: center; padding: var(--space-2) var(--space-2) var(--space-4); margin-bottom: var(--space-2); border-bottom: 1px solid rgba(255,255,255,.12); }
+  .brand img { width: 150px; height: auto; display: block; }
+  nav .nav-label { font-size: var(--fs-micro); color: var(--gray-400); padding: var(--space-2) var(--space-3) var(--space-1); }
+  nav button { display: flex; align-items: center; gap: var(--space-3); width: 100%; background: none; border: none; border-radius: var(--radius-md); padding: 0 var(--space-3); height: var(--control-h-md); cursor: pointer; font-family: inherit; font-size: var(--fs-body); font-weight: var(--fw-semibold); color: var(--gray-300); text-align: start; }
+  nav button i { width: var(--icon-xl); text-align: center; color: var(--arrive-teal); }
+  nav button:hover { background: rgba(255,255,255,.08); color: var(--text-on-brand); }
+  nav button.active { background: var(--arrive-blue); color: var(--text-on-brand); }
+  nav button.active i { color: var(--text-on-brand); }
+  header h1 { font-size: var(--fs-section); font-weight: var(--fw-bold); margin: 0; color: var(--arrive-navy); }
+  header h1 small { display: block; font-size: var(--fs-caption); font-weight: var(--fw-regular); color: var(--text-secondary); }
+  header .user-box { font-size: var(--fs-caption); display: flex; align-items: center; gap: var(--space-3); color: var(--text-secondary); }
+  header .user-box #userLabel { color: var(--arrive-navy); font-weight: var(--fw-semibold); }
+
+  /* Cards & panels */
+  .card { background: var(--surface-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: var(--space-5); box-shadow: var(--shadow-card); margin-bottom: var(--space-4); }
+  .card h2 { font: var(--text-section); color: var(--arrive-navy); margin: 0 0 var(--space-3); }
+  .card h3 { font-size: var(--fs-subtitle); font-weight: var(--fw-bold); color: var(--arrive-navy); margin: 0 0 var(--space-3); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: var(--space-4); }
+
+  /* KPICard */
+  .kpi { background: var(--surface-card); color: var(--text-primary); border: 1px solid var(--border-default); border-top: var(--bw-accent) solid var(--arrive-blue); border-radius: var(--radius-lg); padding: var(--space-4) var(--space-5); box-shadow: var(--shadow-card); display: flex; flex-direction: column; gap: var(--space-2); }
+  .kpi.tone-teal { border-top-color: var(--arrive-teal); }
+  .kpi.tone-navy { border-top-color: var(--arrive-navy); }
+  .kpi.tone-violation { border-top-color: var(--status-violation); }
+  .kpi.tone-under-action { border-top-color: var(--status-under-action); }
+  .kpi .head { display: flex; align-items: center; gap: var(--space-3); }
+  .kpi .disc { width: 40px; height: 40px; border-radius: var(--radius-pill); background: var(--surface-subtle); color: var(--arrive-blue); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .kpi h3 { margin: 0; font-size: var(--fs-subtitle); font-weight: var(--fw-bold); color: var(--arrive-navy); }
+  .kpi .period { font-size: var(--fs-micro); color: var(--text-secondary); }
+  .kpi .val { font-size: var(--fs-kpi); font-weight: var(--fw-bold); line-height: 1; color: var(--arrive-navy); unicode-bidi: isolate; }
+  .kpi .val small { font-size: var(--fs-caption); font-weight: var(--fw-regular); color: var(--text-secondary); margin-inline-start: var(--space-1); }
+  .kpi .sub { font-size: var(--fs-caption); color: var(--text-secondary); margin: 0; }
+  .kpi .sub b { color: var(--arrive-navy); font-family: var(--font-numeric); direction: ltr; unicode-bidi: isolate; display: inline-block; }
+  .kpi .chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .summary-tile { text-align: start; padding: var(--space-4); border-radius: var(--radius-lg); background: var(--surface-card); border: 1px solid var(--border-default); border-top: var(--bw-accent) solid var(--arrive-blue); box-shadow: var(--shadow-card); }
+  .summary-tile .num { font-size: var(--fs-kpi); font-weight: var(--fw-bold); color: var(--arrive-navy); line-height: 1.1; unicode-bidi: isolate; }
+  .summary-tile .lbl { font-size: var(--fs-caption); color: var(--text-secondary); margin-top: var(--space-1); }
+  .summary-tile.tone-violation { border-top-color: var(--status-violation); }
+  .summary-tile.tone-under-action { border-top-color: var(--status-under-action); }
+  .summary-tile.tone-teal { border-top-color: var(--arrive-teal); }
+
+  /* StatusBadge: tint + icon + text */
+  .sbadge { display: inline-flex; align-items: center; gap: var(--space-1); padding: 2px var(--space-3); border-radius: var(--radius-pill); font-size: var(--fs-caption); font-weight: var(--fw-semibold); white-space: nowrap; line-height: 1.6; }
+  .sbadge i { font-size: var(--icon-xs); }
+  .sbadge.success { background: var(--status-success-bg); color: var(--status-success-fg); }
+  .sbadge.in-progress { background: var(--status-in-progress-bg); color: var(--status-in-progress-fg); }
+  .sbadge.under-action { background: var(--status-under-action-bg); color: var(--status-under-action-fg); }
+  .sbadge.violation { background: var(--status-violation-bg); color: var(--status-violation-fg); }
+  .sbadge.closed { background: var(--status-closed-bg); color: var(--status-closed-fg); }
+
+  /* Home */
+  .home-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: var(--space-4); margin-top: var(--space-4); }
+  .home-actions .btn-lg { background: var(--surface-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: var(--space-6) var(--space-3); text-align: center; cursor: pointer; font-size: var(--fs-subtitle); font-weight: var(--fw-bold); color: var(--arrive-navy); box-shadow: var(--shadow-card); display: flex; flex-direction: column; align-items: center; gap: var(--space-3); }
+  .home-actions .btn-lg i { font-size: var(--icon-xl); color: var(--arrive-blue); }
+  .home-actions .btn-lg:hover { border-color: var(--arrive-blue); background: var(--arrive-blue-50); }
+  .type-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: var(--space-3); }
+  .type-card { border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: var(--space-4) var(--space-2); text-align: center; cursor: pointer; font-weight: var(--fw-semibold); color: var(--arrive-navy); font-size: var(--fs-body); background: var(--surface-card); }
+  .type-card:hover, .type-card.sel { border-color: var(--arrive-blue); background: var(--surface-subtle); }
+  .branch-chip-row { display: flex; flex-wrap: wrap; gap: var(--space-2); overflow-x: auto; padding: var(--space-1) 2px var(--space-2); -webkit-overflow-scrolling: touch; }
+  .branch-chip { display: inline-flex; align-items: center; gap: var(--space-2); border: 1px solid var(--border-strong); border-radius: var(--radius-pill); padding: var(--space-2) var(--space-4); font-size: var(--fs-small); font-weight: var(--fw-semibold); color: var(--arrive-navy); cursor: pointer; white-space: nowrap; background: var(--surface-card); }
   .branch-chip input { width: auto; margin: 0; }
-  .branch-chip:has(input:checked) { border-color: var(--orange); background: #FFF6F0; }
-  .branch-card { border: 2px solid #dde2ea; margin-bottom: 12px; }
+  .branch-chip:has(input:checked) { border-color: var(--arrive-blue); background: var(--surface-subtle); }
+  .branch-card { border: 1px solid var(--border-default); margin-bottom: var(--space-3); }
   .branch-card h4 { display: flex; align-items: center; justify-content: space-between; }
-  .batch-summary { background: #F0F2F6; border-radius: 10px; padding: 10px 14px; font-size: 12.5px; margin: 10px 0; }
-  .diff-negative { color: var(--red); font-weight: 700; }
-  label { display: block; font-size: 12.5px; font-weight: 600; margin: 8px 0 4px; color: var(--navy); }
-  label .req { color: var(--red); }
-  input, select, textarea { width: 100%; padding: 7px 9px; border: 1px solid #ccd3de; border-radius: 8px; font-family: inherit; font-size: 13.5px; }
-  .field-err { border-color: var(--red) !important; background: #FDECEA; }
-  .btn { background: var(--orange); color: #fff; border: none; padding: 9px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13.5px; }
+  .batch-summary { background: var(--surface-subtle); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-size: var(--fs-small); margin: var(--space-3) 0; }
+  .diff-negative { color: var(--status-violation-fg); font-weight: var(--fw-bold); }
+
+  /* Inputs / buttons */
+  label { display: block; font-size: var(--fs-small); font-weight: var(--fw-semibold); margin: var(--space-2) 0 var(--space-1); color: var(--arrive-navy); }
+  label .req { color: var(--status-violation-fg); }
+  input, select, textarea { width: 100%; min-height: var(--control-h-md); padding: var(--space-2) var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--radius-md); font-family: inherit; font-size: var(--fs-body); color: var(--arrive-navy); background: var(--surface-card); }
+  input[type="date"], input[type="number"] { font-family: var(--font-numeric); }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--arrive-blue); box-shadow: var(--shadow-focus); }
+  input[type="checkbox"], input[type="radio"] { width: auto; min-height: 0; accent-color: var(--arrive-blue); }
+  .field-err { border-color: var(--status-violation) !important; background: var(--status-violation-bg); }
+  .btn { background: var(--arrive-blue); color: var(--text-on-brand); border: 1px solid transparent; min-height: var(--control-h-md); padding: 0 var(--space-5); border-radius: var(--radius-md); font-family: inherit; font-weight: var(--fw-bold); cursor: pointer; font-size: var(--fs-body); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); }
+  .btn:hover { background: var(--arrive-blue-700); }
+  .btn:active { background: var(--arrive-blue-800); }
   .btn:disabled { opacity: .55; cursor: not-allowed; }
-  .btn.secondary { background: #eceff3; color: var(--navy); }
-  .btn.small { padding: 5px 10px; font-size: 11.5px; }
-  .msg { padding: 11px 13px; border-radius: 8px; margin: 10px 0; font-weight: 600; font-size: 13.5px; }
-  .msg.ok { background: #DFF5E3; color: #14602A; }
-  .msg.err { background: #FBE0DE; color: #8C1D18; }
-  .msg.info { background: #E8EEF9; color: var(--navy); }
-  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  th, td { padding: 6px 7px; border-bottom: 1px solid #eee; text-align: right; }
-  th { background: #F0F2F6; color: var(--navy); position: sticky; top: 0; }
-  .table-wrap { overflow-x: auto; max-height: 480px; overflow-y: auto; }
-  .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
-  .filters > div { min-width: 140px; flex: 1; }
-  .filters-note { font-size: 11px; color: var(--gray); margin-top: 6px; }
-  .status-line { font-size: 11.5px; color: var(--gray); margin-top: 6px; }
+  .btn.secondary { background: var(--surface-card); color: var(--arrive-blue); border-color: var(--arrive-blue); }
+  .btn.secondary:hover { background: var(--surface-subtle); }
+  .btn.small { min-height: var(--control-h-sm); padding: 0 var(--space-3); font-size: var(--fs-caption); }
+  .msg { padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); margin: var(--space-3) 0; font-weight: var(--fw-semibold); font-size: var(--fs-body); border-inline-start: var(--bw-accent) solid transparent; }
+  .msg.ok { background: var(--status-success-bg); color: var(--status-success-fg); border-inline-start-color: var(--status-success); }
+  .msg.err { background: var(--status-violation-bg); color: var(--status-violation-fg); border-inline-start-color: var(--status-violation); }
+  .msg.info { background: var(--status-in-progress-bg); color: var(--status-in-progress-fg); border-inline-start-color: var(--status-in-progress); }
+
+  /* DataTable */
+  table { width: 100%; border-collapse: collapse; font-size: var(--fs-small); }
+  th, td { padding: var(--space-2); border-bottom: 1px solid var(--border-default); text-align: right; }
+  th { background: var(--table-header-bg); color: var(--table-header-fg); font-weight: var(--fw-semibold); white-space: nowrap; position: sticky; top: 0; z-index: var(--z-sticky); }
+  tbody tr:nth-child(even) td { background: var(--gray-50); }
+  tbody tr:hover td { background: var(--arrive-blue-50); }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable::after { content: " \21C5"; opacity: .6; font-size: var(--fs-micro); }
+  th.sortable[data-dir="asc"]::after { content: " \25B2"; opacity: 1; }
+  th.sortable[data-dir="desc"]::after { content: " \25BC"; opacity: 1; }
+  td.n, th.n { direction: ltr; text-align: center; white-space: nowrap; }
+  .filters > div.filter-actions { display: flex; gap: var(--space-2); flex: 0 0 auto; min-width: 0; align-items: flex-end; }
+  .table-wrap { overflow-x: auto; max-height: 480px; overflow-y: auto; border: 1px solid var(--border-default); border-radius: var(--radius-md); }
+  .table-wrap table { border: 0; }
+  .empty-state { text-align: center; padding: var(--space-8) var(--space-4); color: var(--text-secondary); }
+  .empty-state i { font-size: var(--icon-xl); color: var(--gray-400); display: block; margin-bottom: var(--space-3); }
+  .skeleton { display: block; height: 14px; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--gray-100), var(--gray-200), var(--gray-100)); background-size: 200% 100%; animation: sk 1.2s linear infinite; margin: var(--space-2) 0; }
+  .skeleton.tall { height: 88px; border-radius: var(--radius-lg); }
+  @keyframes sk { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
+  /* Filter panel */
+  .filters { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: end; }
+  .filters > div { min-width: 150px; flex: 1; }
+  .filters-note { font-size: var(--fs-caption); color: var(--text-secondary); margin-top: var(--space-2); }
+  .status-line { font-size: var(--fs-caption); color: var(--text-secondary); margin-top: var(--space-2); }
+  .chip-row { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  .fchip { display: inline-flex; align-items: center; gap: var(--space-2); background: var(--surface-subtle); color: var(--arrive-blue); border-radius: var(--radius-pill); padding: 2px var(--space-3); font-size: var(--fs-caption); font-weight: var(--fw-semibold); }
+  .fchip button { all: unset; cursor: pointer; display: inline-flex; color: var(--arrive-blue); }
+  .fchip button:hover { color: var(--status-violation-fg); }
+
+  /* Charts (CSS bars) */
+  .chart { display: flex; flex-direction: column; gap: var(--space-3); }
+  .bar-row { display: grid; grid-template-columns: minmax(120px, 200px) 1fr 72px; align-items: center; gap: var(--space-3); font-size: var(--fs-small); }
+  .bar-row .bl { color: var(--arrive-navy); font-weight: var(--fw-semibold); }
+  .bar-row .bv { font-family: var(--font-numeric); font-weight: var(--fw-bold); direction: ltr; text-align: start; color: var(--arrive-navy); }
+  .bar-track { position: relative; height: 14px; background: var(--gray-100); border-radius: var(--radius-pill); overflow: visible; }
+  .bar-fill { height: 100%; border-radius: var(--radius-pill); background: var(--chart-1); }
+  .bar-fill.alt { background: var(--chart-2); }
+  .bar-fill.dark { background: var(--chart-3); }
+  .bar-target { position: absolute; top: -4px; bottom: -4px; width: 3px; background: var(--chart-target); border-radius: 2px; }
+  .chart-legend { display: flex; gap: var(--space-4); flex-wrap: wrap; font-size: var(--fs-caption); color: var(--text-secondary); margin-top: var(--space-2); }
+  .chart-legend i.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-inline-end: var(--space-1); vertical-align: -1px; }
+
+  /* Misc */
   .config-box { max-width: 480px; margin: 60px auto; }
+  .config-box .brand-tile { display: flex; justify-content: center; background: var(--arrive-blue); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-4); }
+  .config-box .brand-tile img { width: 160px; height: auto; }
   .hidden { display: none !important; }
-  .footer-note { font-size: 11px; color: var(--gray); text-align: center; padding: 16px; }
-  .pager { display: flex; gap: 6px; align-items: center; margin-top: 8px; font-size: 12.5px; }
-  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 50; }
-  .modal { background: #fff; border-radius: 12px; padding: 20px; max-width: 560px; width: 92%; max-height: 85vh; overflow-y: auto; }
-  .security-note { background: #FFF9EC; border: 1px solid #F2A600; border-radius: 10px; padding: 12px 14px; font-size: 12.5px; color: #7a5b00; }
-  #tab-settings [data-stab].active { background: var(--navy); color: #fff; }
+  .footer-note { font-size: var(--fs-caption); color: var(--text-secondary); text-align: center; padding: var(--space-4); }
+  .pager { display: flex; gap: var(--space-2); align-items: center; margin-top: var(--space-2); font-size: var(--fs-small); }
+  .modal-bg { position: fixed; inset: 0; background: var(--overlay-navy); display: flex; align-items: center; justify-content: center; z-index: var(--z-modal); }
+  .modal { background: var(--surface-card); border-radius: var(--radius-lg); padding: var(--space-6); max-width: 560px; width: 92%; max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow-raised); }
+  .security-note { background: var(--status-under-action-bg); border: 1px solid var(--status-under-action); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-size: var(--fs-small); color: var(--status-under-action-fg); }
+  #tab-settings [data-stab].active { background: var(--arrive-blue); color: var(--text-on-brand); border-color: var(--arrive-blue); }
+  #previewModeBanner { background: var(--status-under-action-bg) !important; color: var(--status-under-action-fg) !important; border-bottom: 1px solid var(--status-under-action); font-family: var(--font-ui); }
+  .footer-note bdi { unicode-bidi: isolate; }
+
+
+  .plain { margin: 0; padding-inline-start: var(--space-5); }
+  .plain li { margin-bottom: var(--space-2); }
+  .report-cover { text-align: center; padding: 0; overflow: hidden; }
+  .report-cover .cover-band { background: var(--arrive-blue); padding: var(--space-8) var(--space-6); display: flex; justify-content: center; }
+  .report-cover .cover-band img { width: 220px; height: auto; }
+  .report-cover .cover-title { font: var(--text-title); color: var(--arrive-navy); margin-top: var(--space-8); }
+  .report-cover .cover-sub { color: var(--text-secondary); margin: var(--space-2) 0 var(--space-4); }
+  .report-cover .cover-meta { width: auto; margin: var(--space-5) auto; min-width: 360px; max-width: 90%; }
+  .report-cover .cover-meta th { position: static; background: var(--surface-subtle); color: var(--arrive-navy); }
+  .report-cover .btn { margin: var(--space-2) 0 var(--space-6); }
+  /* Tablet / mobile: sidebar becomes a horizontal bar */
+  @media (max-width: 900px) {
+    #appShell { grid-template-columns: minmax(0,1fr); grid-template-areas: "nav" "head" "main" "foot"; grid-template-rows: auto auto 1fr auto; }
+    #appShell > nav { position: sticky; flex-direction: row; height: auto; align-items: center; overflow-x: auto; overflow-y: hidden; padding: var(--space-2) var(--space-3); top: 0; }
+    #appShell > header { position: static; height: auto; padding: var(--space-3) var(--space-4); flex-wrap: wrap; }
+    #appShell > main { padding: var(--space-4); }
+    .brand { border: 0; margin: 0; padding: 0 var(--space-2); }
+    .brand img { width: 96px; }
+    nav .nav-label { display: none; }
+    nav button { width: auto; white-space: nowrap; flex: none; }
+    .bar-row { grid-template-columns: 1fr 64px; }
+    .bar-row .bl { grid-column: 1 / -1; }
+  }
+
+  /* Print / A4 */
+  @page { size: A4; margin: 16mm 14mm 18mm; @bottom-center { content: "ARRIVE — قسم التدقيق  ·  صفحة " counter(page) " من " counter(pages); font-family: 'Cairo', sans-serif; font-size: 8pt; color: #64748B; } }
+  @media print {
+    html, body { background: #fff !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    #appShell { display: block; }
+    #appShell > nav, #appShell > header, #appShell > .footer-note, #previewModeBanner, .no-print, .filters, .filters-note, .modal-bg { display: none !important; }
+    #appShell > main { max-width: none; padding: 0; }
+    .card, .kpi, .summary-tile { box-shadow: none; break-inside: avoid; }
+    .table-wrap { max-height: none !important; overflow: visible !important; border: 0; }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; }
+    th { position: static; }
+    .report-cover { break-after: page; }
+    #tab-reports > .card:first-child { display: none !important; }
+    .bar-row { grid-template-columns: minmax(110px, 180px) 1fr 56px !important; }
+    .bar-row .bl { grid-column: auto !important; }
+    .report-cover .btn { display: none; }
+  }
 </style>
 </head>
 <body>
 
 <div id="configScreen" class="config-box card hidden">
-  <h2 style="color:var(--navy)">⚙️ إعداد الاتصال بالخادم</h2>
+  <div class="brand-tile"><img src="../design-system/logo/arrive-logo.png" alt="ARRIVE"></div>
+  <h2>إعداد الاتصال بالخادم</h2>
   <p style="font-size:13px;color:var(--gray)">أدخل رابط Web App الخاص بـ Google Apps Script (تحصل عليه بعد نشر Code.gs من شيت البيانات) واسمك لتسجيله مع كل عملية حفظ أو تعديل.</p>
   <label>رابط الـ API <span class="req">*</span></label>
   <input id="cfgUrl" placeholder="https://script.google.com/macros/s/XXXX/exec">
@@ -87,8 +423,9 @@
 </div>
 
 <div id="loginScreen" class="config-box card hidden">
-  <div id="loginBootstrapBox">
-    <h2 style="color:var(--navy)">🔑 إنشاء أول حساب مسؤول (Administrator)</h2>
+  <div class="brand-tile"><img src="../design-system/logo/arrive-logo.png" alt="ARRIVE"></div>
+    <div id="loginBootstrapBox">
+    <h2>إنشاء أول حساب مسؤول (Administrator)</h2>
     <p style="font-size:13px;color:var(--gray)">لا يوجد أي حساب موظف بعد. هذا الإجراء يعمل مرة واحدة فقط لإنشاء أول حساب Administrator، ثم يُغلق تلقائيًا — إضافة بقية الحسابات تتم لاحقًا من "الإعدادات ← إدارة الموظفين".</p>
     <label>الاسم الكامل <span class="req">*</span></label>
     <input id="baFullName">
@@ -99,7 +436,7 @@
     <button class="btn" style="margin-top:14px" onclick="doBootstrapAdmin()">إنشاء الحساب</button>
   </div>
   <div id="loginNormalBox" class="hidden">
-    <h2 style="color:var(--navy)">🔑 تسجيل الدخول</h2>
+    <h2>تسجيل الدخول</h2>
     <label>اسم المستخدم</label>
     <input id="loginUsername">
     <label>كلمة المرور</label>
@@ -112,49 +449,51 @@
 
 <div id="appShell" class="hidden">
 <header>
-  <h1>🗼 ARRIVE AUDIT CONTROL TOWER</h1>
+  <h1 id="pageTitle">الرئيسية<small>ARRIVE AUDIT CONTROL TOWER</small></h1>
   <div class="user-box">
     <span id="userLabel"></span>
     <span id="lastUpdateLabel"></span>
-    <button id="logoutBtn" class="btn small secondary hidden" onclick="doLogout()">🚪 تسجيل الخروج</button>
-    <button class="btn small secondary" onclick="showConfig()">تغيير الاتصال</button>
+    <button id="logoutBtn" class="btn small secondary hidden" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+    <button class="btn small secondary" onclick="showConfig()"><i class="fa-solid fa-plug"></i> تغيير الاتصال</button>
   </div>
 </header>
-<nav>
-  <button data-tab="home" onclick="go('home')">🏠 الرئيسية</button>
-  <button data-tab="register" onclick="go('register')">➕ تسجيل رقابة</button>
-  <button data-tab="search" onclick="go('search')">🔎 البحث في السجلات</button>
-  <button data-tab="dashboard" onclick="go('dashboard')">📊 Dashboard</button>
-  <button data-tab="reports" onclick="go('reports')">📑 التقارير</button>
-  <button data-tab="settings" onclick="go('settings')">⚙️ الإعدادات</button>
+<nav aria-label="التنقل الرئيسي">
+  <div class="brand"><img src="../design-system/logo/arrive-logo.png" alt="ARRIVE"></div>
+  <div class="nav-label">القائمة</div>
+  <button data-tab="home" onclick="go('home')"><i class="fa-solid fa-house"></i> الرئيسية</button>
+  <button data-tab="register" onclick="go('register')"><i class="fa-solid fa-circle-plus"></i> تسجيل رقابة</button>
+  <button data-tab="search" onclick="go('search')"><i class="fa-solid fa-magnifying-glass"></i> البحث في السجلات</button>
+  <button data-tab="dashboard" onclick="go('dashboard')"><i class="fa-solid fa-chart-column"></i> لوحة المتابعة</button>
+  <button data-tab="reports" onclick="go('reports')"><i class="fa-solid fa-file-lines"></i> التقارير</button>
+  <button data-tab="settings" onclick="go('settings')"><i class="fa-solid fa-gear"></i> الإعدادات</button>
 </nav>
 <main>
 
   <div id="tab-home" class="tab">
     <div class="card">
-      <h2 style="color:var(--navy);margin-top:0">مرحبًا، <span id="homeUser"></span> 👋</h2>
+      <h2>مرحبًا، <span id="homeUser"></span></h2>
       <p style="color:var(--gray);font-size:13.5px">هذه الواجهة هي مكان العمل الفعلي — لا حاجة لفتح Google Sheets. كل ما تسجله هنا يُحفظ تلقائيًا في قاعدة البيانات الخلفية وتتحدث المؤشرات فورًا.</p>
       <div class="grid" id="homeSummary" style="margin-top:10px"></div>
       <div class="status-line" id="homeStatus"></div>
     </div>
     <div class="home-actions">
-      <div class="btn-lg" onclick="go('register')">➕<br>تسجيل رقابة جديدة</div>
-      <div class="btn-lg" onclick="go('search')">🔎<br>البحث في السجلات</div>
-      <div class="btn-lg" onclick="go('dashboard')">📊<br>Dashboard</div>
-      <div class="btn-lg" onclick="go('reports')">📑<br>التقارير</div>
+      <div class="btn-lg" onclick="go('register')"><i class="fa-solid fa-circle-plus"></i><span>تسجيل رقابة جديدة</span></div>
+      <div class="btn-lg" onclick="go('search')"><i class="fa-solid fa-magnifying-glass"></i><span>البحث في السجلات</span></div>
+      <div class="btn-lg" onclick="go('dashboard')"><i class="fa-solid fa-chart-column"></i><span>لوحة المتابعة</span></div>
+      <div class="btn-lg" onclick="go('reports')"><i class="fa-solid fa-file-lines"></i><span>التقارير</span></div>
     </div>
   </div>
 
   <div id="tab-register" class="tab hidden">
     <div class="card">
-      <h2 style="color:var(--navy);margin-top:0">اختر نوع الرقابة</h2>
+      <h2>اختر نوع الرقابة</h2>
       <div class="type-cards" id="typeCards"></div>
     </div>
     <div class="card hidden" id="formCard">
-      <h3 id="formTitle" style="color:var(--navy)"></h3>
+      <h3 id="formTitle"></h3>
       <div id="formFields"></div>
       <div style="margin-top:14px">
-        <button class="btn" id="saveBtn" onclick="submitRecord()">✅ حفظ السجل</button>
+        <button class="btn" id="saveBtn" onclick="submitRecord()"><i class="fa-solid fa-floppy-disk"></i> حفظ السجل</button>
         <button class="btn secondary" onclick="clearForm()">مسح النموذج</button>
       </div>
       <div id="formMsg"></div>
@@ -163,7 +502,7 @@
 
   <div id="tab-search" class="tab hidden">
     <div class="card">
-      <h2 style="color:var(--navy);margin-top:0">البحث في السجلات</h2>
+      <h2>البحث في السجلات</h2>
       <div class="filters">
         <div><label>بحث حر (رقم سجل/بوليصة/تحويل/نص)</label><input id="sQ"></div>
         <div><label>نوع الرقابة</label><select id="sType" onchange="onSearchTypeChange()"><option value="">الكل</option></select></div>
@@ -196,12 +535,13 @@
         <div><label>المدقق/المستخدم</label><select id="kAuditor"><option value="">الكل</option></select></div>
         <div><label>الحالة</label><select id="kStatus"><option value="">الكل</option></select></div>
         <div><label>المسؤول</label><select id="kOwner"><option value="">الكل</option></select></div>
-        <div><button class="btn" onclick="loadKpis()">🔄 تطبيق وتحديث</button></div>
+        <div><button class="btn" onclick="loadKpis()"><i class="fa-solid fa-rotate"></i> تطبيق وتحديث</button></div>
       </div>
       <div class="status-line" id="kpiFiltersApplied"></div>
       <div class="status-line" id="kpiUpdated"></div>
     </div>
     <div id="kpiGrid" class="grid"></div>
+    <div id="kpiCharts"></div>
   </div>
 
   <div id="tab-reports" class="tab hidden">
@@ -217,7 +557,7 @@
           <option value="RETURNS">مرتجعات فقط</option>
         </select></div>
         <div><label><input type="checkbox" id="rCompare" style="width:auto;display:inline-block;vertical-align:middle"> قارن بالفترة السابقة المكافئة</label></div>
-        <div><button class="btn" onclick="loadReports()">📊 توليد التقرير</button></div>
+        <div><button class="btn" onclick="loadReports()"><i class="fa-solid fa-file-lines"></i> توليد التقرير</button></div>
       </div>
       <p class="filters-note">"الفترة السابقة المكافئة" = نفس عدد الأيام قبل تاريخ البداية مباشرة. يتطلب تحديد "من" و"إلى" لتفعيل المقارنة.</p>
     </div>
@@ -227,16 +567,16 @@
   <div id="tab-settings" class="tab hidden">
     <div class="card">
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-        <button class="btn small secondary" data-stab="connection" onclick="goSettingsTab('connection')">🔌 الاتصال</button>
-        <button class="btn small secondary" data-stab="branches" onclick="goSettingsTab('branches')">🏢 إدارة الفروع</button>
-        <button class="btn small secondary" data-stab="employees" onclick="goSettingsTab('employees')">👥 إدارة الموظفين</button>
-        <button class="btn small secondary" data-stab="roles" onclick="goSettingsTab('roles')">🛡️ الأدوار والصلاحيات</button>
-        <button class="btn small secondary" data-stab="audit" onclick="goSettingsTab('audit')">📜 سجل العمليات</button>
-        <button class="btn small secondary" data-stab="general" onclick="goSettingsTab('general')">🏳️ عام</button>
+        <button class="btn small secondary" data-stab="connection" onclick="goSettingsTab('connection')"><i class="fa-solid fa-plug"></i> الاتصال</button>
+        <button class="btn small secondary" data-stab="branches" onclick="goSettingsTab('branches')"><i class="fa-solid fa-building"></i> إدارة الفروع</button>
+        <button class="btn small secondary" data-stab="employees" onclick="goSettingsTab('employees')"><i class="fa-solid fa-users"></i> إدارة الموظفين</button>
+        <button class="btn small secondary" data-stab="roles" onclick="goSettingsTab('roles')"><i class="fa-solid fa-shield-halved"></i> الأدوار والصلاحيات</button>
+        <button class="btn small secondary" data-stab="audit" onclick="goSettingsTab('audit')"><i class="fa-solid fa-clock-rotate-left"></i> سجل العمليات</button>
+        <button class="btn small secondary" data-stab="general" onclick="goSettingsTab('general')"><i class="fa-solid fa-sliders"></i> عام</button>
       </div>
 
       <div id="stab-connection" class="settings-sub">
-        <h3 style="color:var(--navy)">إعدادات الاتصال</h3>
+        <h3>إعدادات الاتصال</h3>
         <p class="status-line">رابط Backend الحالي: <code id="connCurrentUrl"></code></p>
         <div id="connStatusBox" class="msg info">لم يُختبر بعد في هذه الجلسة.</div>
         <button class="btn small" onclick="testConnection()">اختبار الاتصال</button>
@@ -244,17 +584,17 @@
       </div>
 
       <div id="stab-branches" class="settings-sub hidden">
-        <h3 style="color:var(--navy)">إدارة الفروع</h3>
+        <h3>إدارة الفروع</h3>
         <div id="branchMsg"></div>
         <div class="filters" style="margin-bottom:10px">
           <div><label>اسم فرع جديد</label><input id="newBranchName"></div>
-          <div style="flex:0"><button class="btn small" style="margin-top:20px" onclick="addBranchUi()">➕ إضافة فرع</button></div>
+          <div style="flex:0"><button class="btn small" style="margin-top:20px" onclick="addBranchUi()"><i class="fa-solid fa-plus"></i> إضافة فرع</button></div>
         </div>
         <div class="table-wrap"><table id="branchesTable"><thead><tr><th>المعرّف</th><th>الاسم</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody></tbody></table></div>
       </div>
 
       <div id="stab-employees" class="settings-sub hidden">
-        <h3 style="color:var(--navy)">إدارة الموظفين</h3>
+        <h3>إدارة الموظفين</h3>
         <div id="empMsg"></div>
         <div class="grid" style="margin-bottom:10px">
           <div><label>الاسم الكامل</label><input id="newEmpFullName"></div>
@@ -271,11 +611,11 @@
           <label id="newEmpBranchesLabel">الفروع المكلَّف بها هذا الموظف (حدّد فرعًا واحدًا على الأقل)</label>
           <div id="newEmpBranchesBox" style="max-height:120px;overflow:auto;border:1px solid #ddd;border-radius:6px;padding:6px"></div>
         </div>
-        <button class="btn small" onclick="addEmployeeUi()">➕ إضافة موظف</button>
-        <div class="table-wrap" style="margin-top:10px"><table id="employeesTable"><thead><tr><th>Employee ID</th><th>الاسم</th><th>اسم المستخدم</th><th>الدور</th><th>الفروع</th><th>الحالة</th><th>آخر دخول</th><th>إجراء</th></tr></thead><tbody></tbody></table></div>
+        <button class="btn small" onclick="addEmployeeUi()"><i class="fa-solid fa-plus"></i> إضافة موظف</button>
+        <div class="table-wrap" style="margin-top:10px"><table id="employeesTable"><thead><tr><th>الرقم الوظيفي</th><th>الاسم</th><th>اسم المستخدم</th><th>الدور</th><th>الفروع</th><th>الحالة</th><th>آخر دخول</th><th>إجراء</th></tr></thead><tbody></tbody></table></div>
 
         <div id="empEditBox" class="card hidden" style="margin-top:14px">
-          <h4 style="color:var(--navy);margin-top:0">✏️ تعديل موظف: <span id="empEditName"></span></h4>
+          <h4><i class="fa-solid fa-pen"></i> تعديل موظف: <span id="empEditName"></span></h4>
           <p id="empEditSelfNote" class="msg info hidden" style="font-size:12.5px">لا يمكنك تعديل دورك أو نطاق فروعك الخاص من هنا — يلزم مسؤول آخر.</p>
           <div class="grid">
             <div><label>الدور</label><select id="empEditRole" onchange="renderEmpEditBranches()">
@@ -288,38 +628,38 @@
               <div id="empEditBranchesBox" style="max-height:120px;overflow:auto;border:1px solid #ddd;border-radius:6px;padding:6px"></div>
             </div>
           </div>
-          <button class="btn small" onclick="saveEmployeeRoleUi()">💾 حفظ الدور والفروع</button>
+          <button class="btn small" onclick="saveEmployeeRoleUi()"><i class="fa-solid fa-floppy-disk"></i> حفظ الدور والفروع</button>
           <hr style="margin:14px 0">
           <label>كلمة مرور جديدة (اتركها فارغة لعدم التغيير)</label>
           <input id="empEditPassword" type="password" placeholder="8 أحرف على الأقل">
-          <button class="btn small secondary" onclick="saveEmployeePasswordUi()">🔑 تغيير كلمة المرور فقط</button>
+          <button class="btn small secondary" onclick="saveEmployeePasswordUi()"><i class="fa-solid fa-key"></i> تغيير كلمة المرور فقط</button>
           <button class="btn small secondary" onclick="closeEmployeeEdit()" style="margin-inline-start:8px">إغلاق</button>
         </div>
       </div>
 
       <div id="stab-roles" class="settings-sub hidden">
-        <h3 style="color:var(--navy)">الأدوار والصلاحيات</h3>
+        <h3>الأدوار والصلاحيات</h3>
         <p class="status-line">هذا عرض توضيحي فقط — الفرض الفعلي للصلاحيات يتم داخل appsscript/Code.gs على الخادم، وليس بإخفاء أزرار الواجهة.</p>
         <div class="table-wrap"><table>
           <thead><tr><th>الدور</th><th>الحفظ/التعديل</th><th>إدارة الفروع</th><th>إدارة الموظفين</th><th>سجل العمليات</th><th>نطاق الفروع</th></tr></thead>
           <tbody>
-            <tr><td>Administrator</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>كل الفروع (صلاحية إدارية ثابتة لإدارة النظام)</td></tr>
-            <tr><td>Audit Manager</td><td>✅</td><td>—</td><td>—</td><td>✅</td><td>الفروع المكلَّف بها، أو كل الفروع فقط عند منحها صراحةً لهذا الموظف بعينه</td></tr>
-            <tr><td>Senior Auditor</td><td>✅ (+تقارير/سجل عمليات فرعه)</td><td>—</td><td>—</td><td>✅ (فرعه فقط)</td><td>الفروع المكلَّف بها فقط — لا يحصل على كل الفروع تلقائيًا</td></tr>
-            <tr><td>Auditor</td><td>✅</td><td>—</td><td>—</td><td>—</td><td>الفروع المكلَّف بها فقط — لا يحصل على كل الفروع تلقائيًا</td></tr>
+            <tr><td>Administrator</td><td>نعم</td><td>نعم</td><td>نعم</td><td>نعم</td><td>كل الفروع (صلاحية إدارية ثابتة لإدارة النظام)</td></tr>
+            <tr><td>Audit Manager</td><td>نعم</td><td>—</td><td>—</td><td>نعم</td><td>الفروع المكلَّف بها، أو كل الفروع فقط عند منحها صراحةً لهذا الموظف بعينه</td></tr>
+            <tr><td>Senior Auditor</td><td>نعم (+تقارير/سجل عمليات فرعه)</td><td>—</td><td>—</td><td>نعم (فرعه فقط)</td><td>الفروع المكلَّف بها فقط — لا يحصل على كل الفروع تلقائيًا</td></tr>
+            <tr><td>Auditor</td><td>نعم</td><td>—</td><td>—</td><td>—</td><td>الفروع المكلَّف بها فقط — لا يحصل على كل الفروع تلقائيًا</td></tr>
             <tr><td>Audit Viewer</td><td>—</td><td>—</td><td>—</td><td>—</td><td>الفروع المكلَّف بها فقط (عرض) — لا يمكن منحه كل الفروع إطلاقًا (قرار إداري)</td></tr>
           </tbody>
         </table></div>
       </div>
 
       <div id="stab-audit" class="settings-sub hidden">
-        <h3 style="color:var(--navy)">سجل العمليات (Audit Log)</h3>
+        <h3>سجل العمليات (Audit Log)</h3>
         <div id="auditMsg"></div>
         <div class="table-wrap"><table id="auditTable"><thead><tr><th>الوقت</th><th>المستخدم</th><th>العملية</th><th>النتيجة</th><th>التفاصيل</th></tr></thead><tbody></tbody></table></div>
       </div>
 
       <div id="stab-general" class="settings-sub hidden">
-        <h3 style="color:var(--navy)">إعدادات عامة</h3>
+        <h3>إعدادات عامة</h3>
         <ul>
           <li>اسم الشركة: ARRIVE</li>
           <li>اسم النظام: ARRIVE AUDIT CONTROL TOWER</li>
@@ -331,23 +671,23 @@
     </div>
 
     <div class="card">
-      <h2 style="color:var(--navy);margin-top:0">القوائم والأهداف الكاملة (للعرض فقط)</h2>
+      <h2>القوائم والأهداف الكاملة (للعرض فقط)</h2>
       <div id="settingsView"></div>
     </div>
 
     <div class="card">
-      <h2 style="color:var(--navy);margin-top:0">🔒 حدود الأمان الحالية — بصراحة</h2>
+      <h2><i class="fa-solid fa-lock"></i> حدود الأمان الحالية — بصراحة</h2>
       <div id="securityNoteBox" class="security-note"></div>
     </div>
   </div>
 
 </main>
-<div class="footer-note">ARRIVE Audit Control Tower — Web Dashboard · قاعدة البيانات: Google Sheets عبر Apps Script</div>
+<div class="footer-note"><bdi dir="ltr">ARRIVE Audit Control Tower</bdi> — لوحة المتابعة · قاعدة البيانات: <bdi dir="ltr">Google Sheets</bdi> عبر <bdi dir="ltr">Apps Script</bdi></div>
 </div>
 
 <div id="editModalBg" class="modal-bg hidden">
   <div class="modal">
-    <h3 style="color:var(--navy);margin-top:0">✏️ تعديل السجل <span id="editRecordId"></span></h3>
+    <h3><i class="fa-solid fa-pen"></i> تعديل السجل <span id="editRecordId"></span></h3>
     <div id="editFields"></div>
     <div style="margin-top:12px">
       <button class="btn" id="editSaveBtn" onclick="confirmEdit()">تأكيد حفظ التعديل</button>
@@ -359,7 +699,7 @@
 
 <div id="detailModalBg" class="modal-bg hidden">
   <div class="modal">
-    <h3 style="color:var(--navy);margin-top:0">تفاصيل السجل</h3>
+    <h3>تفاصيل السجل</h3>
     <div id="detailBody"></div>
     <button class="btn secondary" style="margin-top:10px" onclick="closeDetailModal()">إغلاق</button>
   </div>
@@ -393,6 +733,133 @@ let mnCurrentType = null;          // MorningPickup أو MorningReturns فقط
 let mnSelectedBranches = [];       // أسماء الفروع المختارة حاليًا (بالترتيب الذي اختيرت به)
 let mnBatchRequestId = null;       // clientRequestId واحد لعملية الحفظ الجماعي كلها (idempotency)
 let formHasUnsavedData = false;    // حارس "لا تسمح بتغيير النوع أثناء وجود بيانات غير محفوظة دون تحذير"
+
+// ---- تنسيق التواريخ والأرقام (أرقام لاتينية، تاريخ ISO) — عرض فقط، لا يؤثر على أي منطق ----
+function pad2(n) { return String(n).padStart(2, '0'); }
+function fmtDate(d) { d = d || new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+function fmtTime(d) { d = d || new Date(); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
+function fmtNow() { const d = new Date(); return fmtDate(d) + ' ' + fmtTime(d); }
+function fmtNum(n) { return (n === null || n === undefined || isNaN(n)) ? 'غير محدد بالمصدر' : Number(n).toLocaleString('en-US'); }
+const PAGE_TITLES = { home: 'الرئيسية', register: 'تسجيل رقابة', search: 'البحث في السجلات', dashboard: 'لوحة المتابعة', reports: 'التقارير', settings: 'الإعدادات' };
+
+// ---- Presentation helpers (display only — no business logic) ----
+// تصنيف الحالات النصية إلى فئات العرض المعتمدة (نجاح/قيد التنفيذ/تحت الإجراء/مخالفة/مغلق) — افتراض عرض فقط،
+// أي حالة غير مذكورة هنا تُعرض كنص عادي بلا شارة.
+const STATUS_CLASS = {
+  'مطابق':'success','مصرح به':'success','تم التأكيد':'success','ضمن الهدف':'success','مغلقة في الموعد':'success',
+  'قيد المتابعة':'in-progress','قيد المراجعة':'in-progress','تم الإرسال':'in-progress','مسجلة':'in-progress','تم الاستلام':'in-progress','معتمدة':'in-progress',
+  'مفتوحة':'under-action','متأخرة':'under-action','متأخر':'under-action','متظلم عليها':'under-action','به مشكلة':'under-action','متجاوز':'under-action','مغلقة بعد الموعد':'under-action',
+  'غير مطابق':'violation','مخالفة مؤكدة':'violation','حرجة':'violation',
+  'مغلقة':'closed','مغلق':'closed','منفذة':'closed'
+};
+const STATUS_ICON = { 'success':'fa-circle-check','in-progress':'fa-arrows-rotate','under-action':'fa-triangle-exclamation','violation':'fa-circle-exclamation','closed':'fa-lock' };
+function statusBadge(txt) {
+  const t = (txt === null || txt === undefined) ? '' : String(txt).trim();
+  if (!t || t === '—') return escapeHtml(t || '—');
+  const k = STATUS_CLASS[t];
+  if (!k) return escapeHtml(t);
+  return '<span class="sbadge ' + k + '"><i class="fa-solid ' + STATUS_ICON[k] + '"></i> ' + escapeHtml(t) + '</span>';
+}
+function emptyState(msg) {
+  return '<div class="empty-state"><i class="fa-regular fa-folder-open"></i>' + escapeHtml(msg || 'لا توجد بيانات متاحة وفقًا للفلاتر المحددة.') + '</div>';
+}
+function skeletonBlock(n) { return Array.from({ length: n || 3 }, () => '<span class="skeleton"></span>').join(''); }
+function skeletonCards(n) { return Array.from({ length: n || 4 }, () => '<div class="skeleton tall"></div>').join(''); }
+// يحوّل أول صف كله عناوين إلى thead ويضيف الترتيب بالنقر (على الصفحة المعروضة فقط)
+function finishTable(table) {
+  if (!table) return;
+  if (!table.tHead) {
+    const first = table.querySelector('tr');
+    if (first && first.children.length && Array.from(first.children).every(c => c.tagName === 'TH')) {
+      const thead = document.createElement('thead');
+      thead.appendChild(first);
+      table.insertBefore(thead, table.firstChild);
+    }
+  }
+  if (!table.tHead || !table.tBodies[0] || table.tBodies[0].rows.length < 2) return;
+  const body0 = table.tBodies[0].rows[0];
+  Array.from(table.tHead.rows[0].cells).forEach((th, i) => {
+    if (!th.textContent.trim()) return;
+    if (body0.cells[i] && body0.cells[i].querySelector('button')) return;
+    th.classList.add('sortable');
+    th.onclick = () => sortTable(table, i, th);
+  });
+}
+function sortTable(table, i, th) {
+  const dir = th.dataset.dir === 'asc' ? 'desc' : 'asc';
+  Array.from(table.tHead.rows[0].cells).forEach(c => delete c.dataset.dir);
+  th.dataset.dir = dir;
+  const tb = table.tBodies[0];
+  const rows = Array.from(tb.rows);
+  const val = r => (r.cells[i] ? r.cells[i].textContent.trim() : '');
+  rows.sort((a, b) => {
+    const x = val(a), y = val(b);
+    const nx = Number(x.replace(/,/g, '')), ny = Number(y.replace(/,/g, ''));
+    const c = (x !== '' && y !== '' && !isNaN(nx) && !isNaN(ny)) ? nx - ny : x.localeCompare(y, 'ar');
+    return dir === 'asc' ? c : -c;
+  });
+  rows.forEach(r => tb.appendChild(r));
+}
+// ---- Charts (CSS bars) ----
+function barRow(label, value, max, txt, cls, target) {
+  const w = (value !== null && value !== undefined && max > 0) ? Math.max(0, Math.min(100, value / max * 100)) : 0;
+  const tg = (target !== null && target !== undefined) ? '<span class="bar-target" style="inset-inline-start:' + Math.min(100, target) + '%" title="الهدف"></span>' : '';
+  return '<div class="bar-row"><div class="bl">' + escapeHtml(label) + '</div><div class="bar-track"><div class="bar-fill ' + (cls || '') + '" style="width:' + w + '%"></div>' + tg + '</div><div class="bv">' + txt + '</div></div>';
+}
+// ---- Filter panels: chips + reset (UI only) ----
+const FILTER_PANELS = {
+  search:    { ids: ['sQ','sType','sBranch','sAuditor','sOwner','sStatus','sPriority','sDateFrom','sDateTo'], apply: () => runSearch(1), host: 'tab-search' },
+  dashboard: { ids: ['kDateFrom','kDateTo','kBranch','kType','kAuditor','kStatus','kOwner'], apply: () => loadKpis(), host: 'tab-dashboard' },
+  reports:   { ids: ['rDateFrom','rDateTo','rBranch','rType','rMorningType'], apply: null, host: 'tab-reports' }
+};
+function filterLabel(el) {
+  const l = el.parentElement && el.parentElement.querySelector('label');
+  return l ? l.textContent.replace('*', '').trim() : el.id;
+}
+function refreshChips(name) {
+  const cfg = FILTER_PANELS[name]; const row = document.getElementById('chips-' + name); if (!row) return;
+  const parts = [];
+  cfg.ids.forEach(id => {
+    const el = document.getElementById(id); if (!el || el.value === '') return;
+    const shown = el.tagName === 'SELECT' ? (el.options[el.selectedIndex] ? el.options[el.selectedIndex].text : el.value) : el.value;
+    parts.push('<span class="fchip">' + escapeHtml(filterLabel(el)) + ': <bdi>' + escapeHtml(shown) + '</bdi><button type="button" aria-label="إزالة الفلتر" data-clear="' + id + '"><i class="fa-solid fa-xmark"></i></button></span>');
+  });
+  row.innerHTML = parts.length ? parts.join('') : '<span class="filters-note">لا توجد فلاتر مطبقة — تُعرض كل البيانات.</span>';
+  row.querySelectorAll('[data-clear]').forEach(b => b.onclick = () => clearFilter(name, b.dataset.clear, true));
+}
+function clearFilter(name, id, apply) {
+  const el = document.getElementById(id); if (!el) return;
+  el.value = ''; el.dispatchEvent(new Event('change', { bubbles: true }));
+  refreshChips(name);
+  if (apply && FILTER_PANELS[name].apply) FILTER_PANELS[name].apply();
+}
+function resetFilters(name) {
+  const cfg = FILTER_PANELS[name];
+  cfg.ids.forEach(id => { const el = document.getElementById(id); if (el) { el.value = ''; el.dispatchEvent(new Event('change', { bubbles: true })); } });
+  if (name === 'reports') { const c = document.getElementById('rCompare'); if (c) c.checked = false; }
+  refreshChips(name);
+  if (cfg.apply) cfg.apply();
+}
+function initFilterPanels() {
+  Object.keys(FILTER_PANELS).forEach(name => {
+    const cfg = FILTER_PANELS[name];
+    const first = document.getElementById(cfg.ids[0]); if (!first) return;
+    const panel = first.closest('.card');
+    const btnHost = Array.from(panel.querySelectorAll('button.btn')).pop();
+    if (btnHost) {
+      const rb = document.createElement('button');
+      rb.type = 'button'; rb.className = 'btn secondary';
+      btnHost.parentElement.classList.add('filter-actions');
+      rb.innerHTML = '<i class="fa-solid fa-eraser"></i> إعادة تعيين';
+      rb.onclick = () => resetFilters(name);
+      btnHost.insertAdjacentElement('afterend', rb);
+    }
+    const row = document.createElement('div'); row.className = 'chip-row'; row.id = 'chips-' + name;
+    panel.appendChild(row);
+    cfg.ids.forEach(id => { const el = document.getElementById(id); if (el) { el.addEventListener('change', () => refreshChips(name)); el.addEventListener('input', () => refreshChips(name)); } });
+    refreshChips(name);
+  });
+}
 
 function uuid() {
   if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -446,7 +913,7 @@ function saveConfig() {
   API_URL = url; USER_NAME = user;
   document.getElementById('configScreen').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
-  document.getElementById('userLabel').textContent = '👤 ' + user;
+  document.getElementById('userLabel').textContent = user;
   document.getElementById('homeUser').textContent = user;
   init();
 }
@@ -488,6 +955,8 @@ function go(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
   document.getElementById('tab-' + tab).classList.remove('hidden');
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  const pt = document.getElementById('pageTitle');
+  if (pt) pt.firstChild.nodeValue = PAGE_TITLES[tab] || tab;
   if (tab === 'home') loadHomeSummary();
   if (tab === 'dashboard') loadKpis();
   if (tab === 'reports') { /* wait for user to click "توليد التقرير" so filters are deliberate */ }
@@ -497,8 +966,10 @@ function go(tab) {
 async function init() {
   const boot = await api('bootstrap');
   if (!boot.ok) {
-    alert('تعذّر الاتصال بالخادم: ' + boot.error + '\nتحقق من رابط الـ API في "تغيير الاتصال".\nلم يُحفظ هذا الرابط — الإعداد السابق (إن وجد) لم يتغيّر.');
     showConfig();
+    const ce = document.getElementById('cfgErr');
+    ce.textContent = 'تعذّر الاتصال بالخادم: ' + boot.error + ' — تحقق من رابط الـ API. لم يُحفظ هذا الرابط، والإعداد السابق (إن وجد) لم يتغيّر.';
+    ce.classList.remove('hidden');
     return;
   }
   // Persist ONLY after a real, successful connection test — never persist an unverified URL/name.
@@ -556,7 +1027,7 @@ async function doLogin() {
   if (!r.ok) { err.textContent = r.error; err.classList.remove('hidden'); return; }
   AUTH_TOKEN = r.token; CURRENT_ROLE = r.role; CURRENT_BRANCHES = r.branches; CURRENT_FULLNAME = r.fullName; CURRENT_EMPLOYEE_ID = r.employeeId;
   USER_NAME = r.fullName; localStorage.setItem('arrive_user', USER_NAME);
-  document.getElementById('userLabel').textContent = '👤 ' + USER_NAME + ' — ' + CURRENT_ROLE;
+  document.getElementById('userLabel').textContent = USER_NAME + ' — ' + CURRENT_ROLE;
   document.getElementById('homeUser').textContent = USER_NAME;
   init();
 }
@@ -656,20 +1127,20 @@ function selectType(key) {
   document.querySelectorAll('.type-card').forEach(c => c.classList.toggle('sel', c.textContent === BOOT.controlTypes.find(t=>t.key===key).name));
   const ct = BOOT.controlTypes.find(t => t.key === key);
   document.getElementById('formCard').classList.remove('hidden');
-  document.getElementById('formTitle').textContent = '📝 ' + ct.name;
+  document.getElementById('formTitle').textContent = '' + ct.name;
   document.getElementById('formMsg').innerHTML = '';
   const saveBtn = document.getElementById('saveBtn');
 
   if (isMorningNewType(key)) {
     formMode = 'morningBatch';
-    saveBtn.textContent = '✅ حفظ الدفعة (كل الفروع المختارة)';
+    saveBtn.textContent = 'حفظ الدفعة (كل الفروع المختارة)';
     saveBtn.onclick = submitMorningBatch;
     renderMorningNewForm(key);
     return;
   }
 
   formMode = 'generic';
-  saveBtn.textContent = '✅ حفظ السجل';
+  saveBtn.textContent = 'حفظ السجل';
   saveBtn.onclick = submitRecord;
   const box = document.getElementById('formFields');
   box.innerHTML = '';
@@ -706,7 +1177,7 @@ async function renderMorningNewForm(key) {
   mnSelectedBranches = [];
   mnBatchRequestId = uuid();
   const box = document.getElementById('formFields');
-  box.innerHTML = '<div class="msg info">⏳ جارٍ تحميل الفروع المسموح بها لحسابك...</div>';
+  box.innerHTML = '<div class="msg info">جارٍ تحميل الفروع المسموح بها لحسابك...</div>';
 
   const br = await api('myBranches');
   if (!br.ok) {
@@ -749,7 +1220,7 @@ function renderMnBranchCards() {
     const card = document.createElement('div');
     card.className = 'card branch-card';
     card.dataset.branch = branchName;
-    let html = `<h4>🏢 ${escapeHtml(branchName)} <button type="button" class="btn small secondary" onclick="onMnRemoveBranchCard('${escapeHtml(branchName).replace(/'/g,"\\'")}')">إزالة هذا الفرع</button></h4>`;
+    let html = `<h4>${escapeHtml(branchName)} <button type="button" class="btn small secondary" onclick="onMnRemoveBranchCard('${escapeHtml(branchName).replace(/'/g,"\\'")}')">إزالة هذا الفرع</button></h4>`;
     fields.forEach(f => {
       html += `<label>${escapeHtml(f.label)} ${f.required ? '<span class="req">*</span>' : ''}</label>${buildFieldInput(f, safeId + '_')}`;
     });
@@ -784,14 +1255,14 @@ function updateMnCardDiff(safeId) {
   // "إذا كانت الشحنات المستلمة أكبر من المرسلة، اسمح بالقيمة السالبة... مع تحذير بصري واضح" — تحذير
   // بصري فقط، لا رفض من الواجهة؛ التحقق النهائي دائمًا من الخادم.
   diffEl.classList.toggle('diff-negative', diff < 0);
-  diffEl.title = diff < 0 ? '⚠️ الشحنات المستلمة أكبر من المرسلة لهذا الفرع.' : '';
+  diffEl.title = diff < 0 ? 'الشحنات المستلمة أكبر من المرسلة لهذا الفرع.' : '';
 }
 
 function updateMnBatchSummary() {
   const box = document.getElementById('mnBatchSummary');
   if (!box) return;
   box.innerHTML = mnSelectedBranches.length
-    ? `<div class="batch-summary">📋 سيتم حفظ ${mnSelectedBranches.length} سجل مستقل (فرع واحد لكل سجل)، بمعرّف دفعة (Batch ID) مشترك يُنشئه الخادم: ${mnSelectedBranches.map(escapeHtml).join('، ')}</div>`
+    ? `<div class="batch-summary">سيتم حفظ ${mnSelectedBranches.length} سجل مستقل (فرع واحد لكل سجل)، بمعرّف دفعة (Batch ID) مشترك يُنشئه الخادم: ${mnSelectedBranches.map(escapeHtml).join('، ')}</div>`
     : '';
 }
 
@@ -901,32 +1372,32 @@ async function submitRecord() {
   });
   const msgBox = document.getElementById('formMsg');
   if (missing.length) {
-    msgBox.innerHTML = `<div class="msg err">⚠️ الحقول التالية إلزامية ولم تُملأ: ${missing.join('، ')}</div>`;
+    msgBox.innerHTML = `<div class="msg err">الحقول التالية إلزامية ولم تُملأ: ${missing.join('، ')}</div>`;
     return;
   }
   const ruleErrors = clientValidateRules(ct, data);
   if (ruleErrors.length) {
     // Caught here without even calling the server — data stays exactly as the user typed it (nothing is
     // cleared), so they can fix the numbers/dates in place and resubmit.
-    msgBox.innerHTML = `<div class="msg err">⚠️ ${ruleErrors.join('<br>')}</div>`;
+    msgBox.innerHTML = `<div class="msg err">${ruleErrors.join('<br>')}</div>`;
     return;
   }
   const btn = document.getElementById('saveBtn');
   saveInFlight = true; btn.disabled = true;
-  msgBox.innerHTML = `<div class="msg info">⏳ جارٍ الحفظ...</div>`;
+  msgBox.innerHTML = `<div class="msg info">جارٍ الحفظ...</div>`;
   try {
     const res = await apiPost({ action: 'save', type: selectedType, data, user: USER_NAME, clientRequestId: currentClientRequestId });
     if (res.ok) {
       resetFieldsOnly();
-      const now = new Date().toLocaleString('ar-EG');
-      msgBox.innerHTML = `<div class="msg ok">✅ تم حفظ السجل بنجاح<br>
+      const now = fmtNow();
+      msgBox.innerHTML = `<div class="msg ok">تم حفظ السجل بنجاح<br>
         رقم السجل: <b>${res.recordId}</b><br>
         نوع الرقابة: ${res.typeName || ct.name}<br>
         وقت الحفظ: ${res.savedAt || now}</div>`;
     } else if (isSessionError(res)) {
       handleSessionExpiry(res.error); // البيانات المُدخَلة تبقى كما هي في الحقول — لا مسح قبل التوجيه
     } else {
-      msgBox.innerHTML = `<div class="msg err">⚠️ ${(res.errors || [res.error || 'فشل الحفظ لسبب غير معروف.']).join('<br>')}</div>`;
+      msgBox.innerHTML = `<div class="msg err">${(res.errors || [res.error || 'فشل الحفظ لسبب غير معروف.']).join('<br>')}</div>`;
     }
   } finally {
     saveInFlight = false; btn.disabled = false;
@@ -939,7 +1410,7 @@ async function submitMorningBatch() {
   const ct = BOOT.controlTypes.find(t => t.key === mnCurrentType);
   const msgBox = document.getElementById('formMsg');
   if (!mnSelectedBranches.length) {
-    msgBox.innerHTML = `<div class="msg err">⚠️ اختر فرعًا واحدًا على الأقل قبل الحفظ.</div>`;
+    msgBox.innerHTML = `<div class="msg err">اختر فرعًا واحدًا على الأقل قبل الحفظ.</div>`;
     return;
   }
   const fields = mnFieldsForType(mnCurrentType);
@@ -962,18 +1433,18 @@ async function submitMorningBatch() {
     rows.push({ branch: branchName, data });
   });
   if (missing.length) {
-    msgBox.innerHTML = `<div class="msg err">⚠️ حقول إلزامية لم تُملأ:<br>${missing.map(m => `فرع "${escapeHtml(m.branch)}": ${escapeHtml(m.label)}`).join('<br>')}</div>`;
+    msgBox.innerHTML = `<div class="msg err">حقول إلزامية لم تُملأ:<br>${missing.map(m => `فرع "${escapeHtml(m.branch)}": ${escapeHtml(m.label)}`).join('<br>')}</div>`;
     return;
   }
   if (ruleErrorsAll.length) {
     // نفس منطق submitRecord: تُوقَف العملية قبل الوصول للخادم إطلاقًا، والبيانات المُدخَلة تبقى كما هي.
-    msgBox.innerHTML = `<div class="msg err">⚠️ ${ruleErrorsAll.map(e => `فرع "${escapeHtml(e.branch)}": ${escapeHtml(e.message)}`).join('<br>')}</div>`;
+    msgBox.innerHTML = `<div class="msg err">${ruleErrorsAll.map(e => `فرع "${escapeHtml(e.branch)}": ${escapeHtml(e.message)}`).join('<br>')}</div>`;
     return;
   }
 
   const btn = document.getElementById('saveBtn');
   mnSaveInFlight = true; btn.disabled = true;
-  msgBox.innerHTML = `<div class="msg info">⏳ جارٍ حفظ ${rows.length} سجل...</div>`;
+  msgBox.innerHTML = `<div class="msg info">جارٍ حفظ ${rows.length} سجل...</div>`;
   try {
     // Batch ID يُنشئه الخادم حصرًا (Utilities.getUuid() في _actionSaveMorningBatch) — الواجهة لا تُنشئ
     // ولا ترسل أي batch_id، فقط clientRequestId الخاص بها لأغراض الحماية من التكرار (Idempotency).
@@ -981,7 +1452,7 @@ async function submitMorningBatch() {
     if (res.ok) {
       // لا يُعرَض نجاح إلا بعد استجابة الخادم فعليًا بنجاح كامل — لا نجاح متفائل قبل ذلك.
       const branchList = (res.branches || rows.map(r => r.branch)).map(escapeHtml).join('، ');
-      msgBox.innerHTML = `<div class="msg ok">✅ تم حفظ ${res.recordIds ? res.recordIds.length : rows.length} سجل بنجاح.<br>
+      msgBox.innerHTML = `<div class="msg ok">تم حفظ ${res.recordIds ? res.recordIds.length : rows.length} سجل بنجاح.<br>
         الفروع: ${branchList}<br>
         أرقام السجلات: ${(res.recordIds || []).map(escapeHtml).join('، ')}<br>
         Batch ID: ${escapeHtml(res.batchId || '')}<br>
@@ -992,10 +1463,10 @@ async function submitMorningBatch() {
     } else {
       // رفض كامل من الخادم (فرع واحد غير مصرَّح به، تحقق فشل، ...) — لا افتراض أن بعض الفروع حُفظت،
       // ولا مسح لأي بيانات مُدخَلة حتى يستطيع المستخدم تصحيح المشكلة وإعادة المحاولة.
-      msgBox.innerHTML = `<div class="msg err">⚠️ فشلت عملية الحفظ الجماعي بالكامل — لم يُحفظ أي سجل:<br>${escapeHtml((res.errors || [res.error || 'سبب غير معروف.']).join(' | '))}</div>`;
+      msgBox.innerHTML = `<div class="msg err">فشلت عملية الحفظ الجماعي بالكامل — لم يُحفظ أي سجل:<br>${escapeHtml((res.errors || [res.error || 'سبب غير معروف.']).join(' | '))}</div>`;
     }
   } catch (e) {
-    msgBox.innerHTML = `<div class="msg err">⚠️ تعذّر الاتصال بالخادم أثناء الحفظ الجماعي — لم يُحفظ أي سجل (لا افتراض نجاح جزئي). أعد المحاولة.</div>`;
+    msgBox.innerHTML = `<div class="msg err">تعذّر الاتصال بالخادم أثناء الحفظ الجماعي — لم يُحفظ أي سجل (لا افتراض نجاح جزئي). أعد المحاولة.</div>`;
   } finally {
     mnSaveInFlight = false; btn.disabled = false;
   }
@@ -1024,11 +1495,12 @@ async function runSearch(page) {
   searchState.page = page || 1;
   const params = Object.assign({}, collectSearchFilters(), { page: searchState.page, pageSize: searchState.pageSize });
   document.getElementById('searchResultsInfo').textContent = 'جارٍ البحث...';
+  document.getElementById('searchTable').innerHTML = '<tbody><tr><td>' + skeletonBlock(5) + '</td></tr></tbody>';
   const res = await api('search', params);
   if (!res.ok) { document.getElementById('searchResultsInfo').textContent = 'تعذّر البحث: ' + res.error; return; }
-  document.getElementById('searchResultsInfo').textContent = `إجمالي النتائج: ${res.count} — صفحة ${res.page} من ${res.totalPages}`;
+  document.getElementById('searchResultsInfo').textContent = `إجمالي النتائج: ${res.count} — صفحة ${res.page} من ${res.totalPages} — الترتيب بالنقر على عنوان العمود يخص الصفحة المعروضة فقط.`;
   const table = document.getElementById('searchTable');
-  if (!res.results.length) { table.innerHTML = '<tr><td>لا توجد نتائج مطابقة لهذا البحث/الفلاتر.</td></tr>'; document.getElementById('searchPager').innerHTML = ''; return; }
+  if (!res.results.length) { table.innerHTML = '<tbody><tr><td>' + emptyState('لا توجد بيانات متاحة وفقًا للفلاتر المحددة.') + '</td></tr></tbody>'; document.getElementById('searchPager').innerHTML = ''; return; }
   const branchLabelOptions = ['الفرع', 'الفرع المحول'];
   let html = '<tr><th>النوع</th><th>رقم السجل</th><th>تاريخ الإدخال</th><th>المستخدم المُدخل</th><th>الفرع</th><th>المرجع</th><th>الحالة</th><th>المسؤول</th><th>تاريخ الإغلاق</th><th>الالتزام بالموعد</th><th></th><th></th></tr>';
   res.results.forEach(r => {
@@ -1047,13 +1519,14 @@ async function runSearch(page) {
     // كل قيمة هنا قد تكون نصًّا حرًّا أدخله مستخدم سابقًا (ملاحظة، اسم فرع، اسم مسؤول) — تُهرَّب دومًا
     // قبل إدراجها في innerHTML لمنع تنفيذ أي HTML/JS مضمَّن فيها (راجع تقرير المخاطر الأمنية).
     html += `<tr>
-      <td>${escapeHtml(r.typeName)}</td><td>${escapeHtml(recId)}</td><td>${escapeHtml(rec['تاريخ الإدخال'])}</td><td>${escapeHtml(rec['المستخدم (مُدخل السجل)'])}</td>
-      <td>${escapeHtml(branch)}</td><td>${escapeHtml(refCol)}</td><td>${escapeHtml(status)}</td><td>${escapeHtml(owner)}</td><td>${escapeHtml(closeDate)}</td><td>${escapeHtml(compliance)}</td>
+      <td>${escapeHtml(r.typeName)}</td><td class="n">${escapeHtml(recId)}</td><td class="n">${escapeHtml(rec['تاريخ الإدخال'])}</td><td>${escapeHtml(rec['المستخدم (مُدخل السجل)'])}</td>
+      <td>${escapeHtml(branch)}</td><td>${escapeHtml(refCol)}</td><td>${statusBadge(status)}</td><td>${escapeHtml(owner)}</td><td class="n">${escapeHtml(closeDate)}</td><td>${statusBadge(compliance)}</td>
       <td><button class="btn small secondary" onclick='openDetail(${JSON.stringify(r.type)}, ${JSON.stringify(recId)})'>تفاصيل</button></td>
       <td><button class="btn small" onclick='openEdit(${JSON.stringify(r.type)}, ${JSON.stringify(recId)})'>تعديل</button></td>
     </tr>`;
   });
   table.innerHTML = html;
+  finishTable(table);
   renderPager(res);
 }
 
@@ -1114,11 +1587,11 @@ async function confirmEdit() {
   const ruleErrors = clientValidateRules(ct, data);
   if (ruleErrors.length) { msgBox.innerHTML = `<div class="msg err">${ruleErrors.join('<br>')}</div>`; return; }
   document.getElementById('editSaveBtn').disabled = true;
-  msgBox.innerHTML = `<div class="msg info">⏳ جارٍ حفظ التعديل...</div>`;
+  msgBox.innerHTML = `<div class="msg info">جارٍ حفظ التعديل...</div>`;
   const res = await apiPost({ action: 'update', type, id, data, user: USER_NAME });
   document.getElementById('editSaveBtn').disabled = false;
   if (res.ok) {
-    msgBox.innerHTML = `<div class="msg ok">✅ ${res.message}</div>`;
+    msgBox.innerHTML = `<div class="msg ok">${res.message}</div>`;
     setTimeout(() => { closeEditModal(); runSearch(searchState.page); }, 900);
   } else if (isSessionError(res)) {
     handleSessionExpiry(res.error); // البيانات المُدخَلة في نافذة التعديل تبقى كما هي — لا مسح قبل التوجيه
@@ -1142,70 +1615,104 @@ function collectKpiFilters() {
 
 async function loadKpis() {
   document.getElementById('kpiUpdated').textContent = 'جارٍ التحميل...';
+  document.getElementById('kpiGrid').innerHTML = skeletonCards(4);
+  document.getElementById('kpiCharts').innerHTML = '';
   const params = collectKpiFilters();
+  KPI_PERIOD = (params.dateFrom || params.dateTo) ? ('الفترة: ' + (params.dateFrom || 'بداية البيانات') + ' → ' + (params.dateTo || 'اليوم')) : 'كل الفترات';
+  refreshChips('dashboard');
   const res = await api('kpis', params);
-  if (!res.ok) { document.getElementById('kpiUpdated').textContent = 'خطأ: ' + res.error; return; }
+  if (!res.ok) { document.getElementById('kpiUpdated').textContent = 'خطأ: ' + res.error; document.getElementById('kpiGrid').innerHTML = '<div class="card msg err" style="grid-column:1/-1">تعذّر تحميل المؤشرات: ' + escapeHtml(res.error) + '</div>'; return; }
   document.getElementById('kpiFiltersApplied').textContent = 'الفلاتر المطبَّقة: ' + res.filtersApplied;
-  document.getElementById('kpiUpdated').textContent = 'آخر تحديث: ' + new Date().toLocaleString('ar-EG');
+  document.getElementById('kpiUpdated').textContent = 'آخر تحديث: ' + fmtNow();
   renderKpiGrid(res.byType);
 }
 
+let KPI_PERIOD = 'كل الفترات';
+function pctTxt(v) { return (v !== null && v !== undefined) ? v.toFixed(1) + '%' : 'غير محدد بالمصدر'; }
+function kv(l, v) { return '<p class="sub">' + l + ': <b>' + v + '</b></p>'; }
+function targetChip(pct, target) {
+  if (pct === null || pct === undefined || target === null || target === undefined) return '';
+  return pct >= target
+    ? '<span class="sbadge success"><i class="fa-solid fa-circle-check"></i> بلغ الهدف</span>'
+    : '<span class="sbadge under-action"><i class="fa-solid fa-triangle-exclamation"></i> دون الهدف</span>';
+}
 function renderKpiGrid(b) {
   const grid = document.getElementById('kpiGrid');
+  const tgt = x => (x.target !== null && x.target !== undefined) ? x.target : 'غير محدد بالمصدر';
   const defs = {
-    Morning: { title: 'المطابقة الصباحية', color: 'var(--navy)', lines: x => [
-      `إجمالي الحالات: ${x.total}`,
-      `نسبة المطابقة: ${x.matchPct != null ? x.matchPct.toFixed(1)+'%' : '—'} (الهدف ${x.target}% من الإعدادات)`,
-    ]},
-    Returns: { title: 'مطابقة المرتجعات', color: 'var(--navy)', lines: x => [
-      `إجمالي: ${x.total} | مطابق: ${x.matched} | غير مطابق: ${x.unmatched}`,
-      `النسبة: ${x.matchPct != null ? x.matchPct.toFixed(1)+'%' : '—'} (الهدف ${x.target}%)`,
-    ]},
-    Scrub: { title: 'مسح الحالات', color: 'var(--orange)', lines: x => [
-      `إجمالي العمليات: ${x.total}`,
-      `قيد المراجعة: ${x.underReview} | مصرح بها: ${x.authorized} | مخالفات مؤكدة: ${x.confirmedViolations}`,
-    ]},
-    Transfer: { title: 'التحويلات', color: 'var(--orange)', lines: x => [
-      `إجمالي: ${x.total} | مؤكد: ${x.confirmed} | متجاوز مدة التأكيد: ${x.late}`,
-      `نسبة الالتزام بالتأكيد: ${x.compliancePct != null ? x.compliancePct.toFixed(1)+'%' : '—'} (الهدف ${x.target} ساعة)`,
-    ]},
-    Issues: { title: 'المشاكل', color: 'var(--red)', lines: x => [
-      `إجمالي: ${x.total} | مفتوحة: ${x.open} | مغلقة: ${x.closed}`,
-      `نسبة الإغلاق في الموعد: ${x.onTimeClosePct != null ? x.onTimeClosePct.toFixed(1)+'%' : '—'} (الهدف ${x.target} أيام)`,
-    ]},
-    Penalty: { title: 'الجزاءات', color: 'var(--red)', lines: x => [
-      `المخالفات: ${x.violations} | معتمدة: ${x.approved} | منفذة: ${x.executed}`,
-      `إجمالي القيمة المنفذة: ${(x.totalValue||0).toLocaleString('ar-EG')}`,
-    ]},
-    Overdue: { title: 'الحالات المتأخرة', color: 'var(--yellow)', lines: x => [
-      `إجمالي: ${x.total} | ضمن الهدف: ${x.withinTarget} | متأخرة: ${x.overdue}`,
-      `أكثر من 15 يومًا: ${x.over15} | أكثر من 20 يومًا: ${x.over20} (الحد المستهدف الحالي: ${x.targetDays} يوم من الإعدادات)`,
-    ]},
+    Morning: { title: 'المطابقة الصباحية', icon: 'clipboard-check', tone: '', main: x => fmtNum(x.total), mainLbl: 'إجمالي الحالات', lines: x => [
+      kv('نسبة المطابقة', pctTxt(x.matchPct)), kv('الهدف (من الإعدادات)', tgt(x) + '%')], chip: x => targetChip(x.matchPct, x.target) },
+    Returns: { title: 'مطابقة المرتجعات', icon: 'rotate-left', tone: '', main: x => fmtNum(x.total), mainLbl: 'إجمالي', lines: x => [
+      kv('مطابق', fmtNum(x.matched)), kv('غير مطابق', fmtNum(x.unmatched)), kv('النسبة', pctTxt(x.matchPct)), kv('الهدف', tgt(x) + '%')], chip: x => targetChip(x.matchPct, x.target) },
+    Scrub: { title: 'مسح الحالات', icon: 'magnifying-glass-chart', tone: 'teal', main: x => fmtNum(x.total), mainLbl: 'إجمالي العمليات', lines: x => [
+      kv('قيد المراجعة', fmtNum(x.underReview)), kv('مصرح بها', fmtNum(x.authorized)), kv('مخالفات مؤكدة', fmtNum(x.confirmedViolations))], chip: () => '' },
+    Transfer: { title: 'التحويلات', icon: 'truck-fast', tone: 'teal', main: x => fmtNum(x.total), mainLbl: 'إجمالي', lines: x => [
+      kv('مؤكد', fmtNum(x.confirmed)), kv('متجاوز مدة التأكيد', fmtNum(x.late)), kv('نسبة الالتزام بالتأكيد', pctTxt(x.compliancePct)), kv('الهدف', tgt(x) + ' ساعة')], chip: () => '' },
+    Issues: { title: 'المشاكل', icon: 'triangle-exclamation', tone: 'under-action', main: x => fmtNum(x.total), mainLbl: 'إجمالي', lines: x => [
+      kv('مفتوحة', fmtNum(x.open)), kv('مغلقة', fmtNum(x.closed)), kv('نسبة الإغلاق في الموعد', pctTxt(x.onTimeClosePct)), kv('الهدف', tgt(x) + ' أيام')], chip: () => '' },
+    Penalty: { title: 'الجزاءات', icon: 'gavel', tone: 'violation', main: x => fmtNum(x.violations), mainLbl: 'المخالفات', lines: x => [
+      kv('معتمدة', fmtNum(x.approved)), kv('منفذة', fmtNum(x.executed)), kv('إجمالي القيمة المنفذة', fmtNum(x.totalValue || 0))], chip: () => '' },
+    Overdue: { title: 'الحالات المتأخرة', icon: 'clock', tone: 'under-action', main: x => fmtNum(x.total), mainLbl: 'إجمالي', lines: x => [
+      kv('ضمن الهدف', fmtNum(x.withinTarget)), kv('متأخرة', fmtNum(x.overdue)), kv('أكثر من 15 يومًا', fmtNum(x.over15)), kv('أكثر من 20 يومًا', fmtNum(x.over20)), kv('الحد المستهدف الحالي (من الإعدادات)', fmtNum(x.targetDays) + ' يوم')], chip: () => '' },
   };
   const keys = Object.keys(defs).filter(k => b[k]); // only render the cards the (possibly type-filtered) response actually returned
-  if (!keys.length) { grid.innerHTML = '<div class="card msg info">لا توجد بيانات لعرضها بهذه الفلاتر.</div>'; return; }
-  grid.innerHTML = keys.map(k => `
-    <div class="kpi" style="background:${defs[k].color}">
-      <h3>${defs[k].title}</h3>
-      ${defs[k].lines(b[k]).map(l => `<div class="sub">${l}</div>`).join('')}
-    </div>`).join('');
+  if (!keys.length) { grid.innerHTML = '<div class="card" style="grid-column:1/-1">' + emptyState('لا توجد بيانات متاحة وفقًا للفلاتر المحددة.') + '</div>'; document.getElementById('kpiCharts').innerHTML = ''; return; }
+  grid.innerHTML = keys.map(k => {
+    const d = defs[k], x = b[k];
+    return '<div class="kpi' + (d.tone ? ' tone-' + d.tone : '') + '">' +
+      '<div class="head"><span class="disc"><i class="fa-solid fa-' + d.icon + '"></i></span><div><h3>' + d.title + '</h3><div class="period">' + escapeHtml(KPI_PERIOD) + '</div></div></div>' +
+      '<div class="val">' + d.main(x) + '<small>' + d.mainLbl + '</small></div>' +
+      d.lines(x).join('') + '<div class="chips">' + d.chip(x) + '</div></div>';
+  }).join('');
+  renderKpiCharts(b);
+}
+function renderKpiCharts(b) {
+  const box = document.getElementById('kpiCharts'); let html = '';
+  // 1) النسبة الفعلية مقابل الهدف
+  const prDefs = [['Morning', 'المطابقة الصباحية', 'matchPct', true], ['Returns', 'مطابقة المرتجعات', 'matchPct', true],
+                  ['Transfer', 'الالتزام بتأكيد التحويلات', 'compliancePct', false], ['Issues', 'الإغلاق في الموعد (المشاكل)', 'onTimeClosePct', false]];
+  const pr = prDefs.filter(d => b[d[0]]).map(d => [d[1], b[d[0]][d[2]], b[d[0]].target, d[3]]);
+  if (pr.length) {
+    html += '<div class="card"><h3>النسبة الفعلية مقابل الهدف (%)</h3><div class="chart">' +
+      pr.map(r => barRow(r[0], r[1], 100, (r[1] !== null ? r[1].toFixed(1) + '%' : 'غير محدد بالمصدر'), r[3] ? '' : 'alt', r[3] ? r[2] : null)).join('') +
+      '</div><div class="chart-legend"><span><i class="sw" style="background:var(--chart-1)"></i>النسبة الفعلية (مطابقة)</span><span><i class="sw" style="background:var(--chart-2)"></i>النسبة الفعلية (التزام/إغلاق)</span><span><i class="sw" style="background:var(--chart-target)"></i>خط الهدف</span></div>' +
+      '<div class="filters-note">الهدف لنوعي المطابقة نسبة مئوية؛ أما التحويلات (ساعات) والمشاكل (أيام) فهدفهما زمني فلا يُرسم كخط.</div></div>';
+  }
+  // 2) عدد السجلات حسب النوع
+  const names = { Morning: 'المطابقة الصباحية', Returns: 'مطابقة المرتجعات', Scrub: 'مسح الحالات', Transfer: 'التحويلات', Issues: 'المشاكل' };
+  const rc = Object.keys(names).filter(k => b[k] && typeof b[k].total === 'number');
+  if (rc.length) {
+    const mx = Math.max.apply(null, rc.map(k => b[k].total));
+    html += '<div class="card"><h3>عدد السجلات حسب نوع الرقابة</h3><div class="chart">' + rc.map(k => barRow(names[k], b[k].total, mx, fmtNum(b[k].total), 'dark')).join('') +
+      '</div><div class="filters-note">لا يوفّر المصدر إجمالي سجلات للجزاءات، وتُعرض الحالات المتأخرة في الرسم التالي.</div></div>';
+  }
+  // 3) الحالات المتأخرة (حدود تراكمية)
+  if (b.Overdue && typeof b.Overdue.total === 'number') {
+    const o = b.Overdue, mx = o.total;
+    html += '<div class="card"><h3>الحالات المتأخرة حسب الحد الزمني</h3><div class="chart">' +
+      barRow('الإجمالي', o.total, mx, fmtNum(o.total), 'dark') + barRow('ضمن الهدف', o.withinTarget, mx, fmtNum(o.withinTarget), 'alt') +
+      barRow('متأخرة', o.overdue, mx, fmtNum(o.overdue), '') + barRow('أكثر من 15 يومًا', o.over15, mx, fmtNum(o.over15), '') + barRow('أكثر من 20 يومًا', o.over20, mx, fmtNum(o.over20), '') +
+      '</div><div class="filters-note">الأعداد تراكمية: «أكثر من 20 يومًا» جزء من «أكثر من 15 يومًا»، وكلاهما جزء من «متأخرة» (متأخرة = الإجمالي − ضمن الهدف). النسب محسوبة من نفس أرقام الخادم دون تعديل.</div></div>';
+  }
+  box.innerHTML = html;
 }
 
 async function loadHomeSummary() {
   document.getElementById('homeUser').textContent = USER_NAME;
   document.getElementById('homeStatus').textContent = 'جارٍ تحميل الملخص...';
+  document.getElementById('homeSummary').innerHTML = skeletonCards(4);
   const [kpis, rep] = await Promise.all([api('kpis', {}), api('reports', {})]);
   if (!kpis.ok || !rep.ok) { document.getElementById('homeStatus').textContent = 'تعذّر تحميل الملخص: ' + (kpis.error || rep.error); return; }
   const open = kpis.byType.Issues.open + kpis.byType.Overdue.overdue;
   const tiles = [
-    { num: rep.current.grandTotal, lbl: 'إجمالي السجلات (كل الأنواع)' },
-    { num: open, lbl: 'حالات مفتوحة/متأخرة' },
-    { num: kpis.byType.Overdue.overdue, lbl: 'حالات متأخرة عن الهدف' },
-    { num: kpis.byType.Scrub.confirmedViolations, lbl: 'مخالفات مؤكدة' },
+    { num: rep.current.grandTotal, lbl: 'إجمالي السجلات (كل الأنواع)', tone: '' },
+    { num: open, lbl: 'حالات مفتوحة/متأخرة', tone: 'under-action' },
+    { num: kpis.byType.Overdue.overdue, lbl: 'حالات متأخرة عن الهدف', tone: 'under-action' },
+    { num: kpis.byType.Scrub.confirmedViolations, lbl: 'مخالفات مؤكدة', tone: 'violation' },
   ];
-  document.getElementById('homeSummary').innerHTML = tiles.map(t => `<div class="summary-tile"><div class="num">${t.num}</div><div class="lbl">${t.lbl}</div></div>`).join('');
-  document.getElementById('homeStatus').textContent = 'آخر تحديث: ' + new Date().toLocaleString('ar-EG') + ' — الأرقام أعلاه بلا فلاتر (كل البيانات إلى الآن).';
-  document.getElementById('lastUpdateLabel').textContent = '🕒 ' + new Date().toLocaleTimeString('ar-EG');
+  document.getElementById('homeSummary').innerHTML = tiles.map(t => `<div class="summary-tile${t.tone ? ' tone-' + t.tone : ''}"><div class="num">${fmtNum(t.num)}</div><div class="lbl">${t.lbl}</div></div>`).join('');
+  document.getElementById('homeStatus').textContent = 'آخر تحديث: ' + fmtNow() + ' — الأرقام أعلاه بلا فلاتر (كل البيانات إلى الآن).';
+  document.getElementById('lastUpdateLabel').textContent = 'آخر تحديث: ' + fmtTime();
 }
 
 // ---------------- Reports ----------------
@@ -1222,72 +1729,106 @@ async function loadReports() {
     morningMatchingType: document.getElementById('rMorningType').value,
     comparePrev: document.getElementById('rCompare').checked ? '1' : '0',
   };
+  body.innerHTML = '<div class="card">' + skeletonBlock(6) + '</div>';
   const res = await api('reports', params);
   if (!res.ok) { body.innerHTML = `<div class="card msg err">${escapeHtml(res.error)}</div>`; return; }
   const c = res.current;
+  const isDemo = String(API_URL || '').indexOf('mock://') === 0;
+  const E = escapeHtml;
+  const NA = 'غير محدد بالمصدر';
+  const periodTxt = (res.period.dateFrom || 'بداية البيانات') + ' → ' + (res.period.dateTo || 'اليوم');
+  const demoBadge = isDemo ? '<span class="sbadge under-action"><i class="fa-solid fa-flask"></i> بيانات توضيحية</span>' : '';
   let html = '';
-  html += `<div class="card">
-    <h2 style="color:var(--navy);margin-top:0">📋 ملخص تنفيذي</h2>
-    <div class="status-line">الفترة المحلَّلة: ${res.period.dateFrom || 'بداية البيانات'} → ${res.period.dateTo || 'اليوم'} | الفلاتر: ${res.filtersApplied} | وقت التوليد: ${res.generatedAt}</div>
-    <div class="grid" style="margin-top:10px">
-      <div class="summary-tile"><div class="num">${c.grandTotal}</div><div class="lbl">إجمالي السجلات خلال الفترة</div></div>
-      <div class="summary-tile"><div class="num">${c.confirmedViolations}</div><div class="lbl">مخالفات مؤكدة (من مسح الحالات)</div></div>
-      <div class="summary-tile"><div class="num">${c.overdueCount}</div><div class="lbl">حالات متأخرة عن الهدف</div></div>
-      <div class="summary-tile"><div class="num">${c.openActionsTotal}</div><div class="lbl">إجراءات لم تُغلق بعد</div></div>
-    </div>
+  // ---- 1) الغلاف
+  html += `<div class="report-cover card">
+    <div class="cover-band"><img src="../design-system/logo/arrive-logo.png" alt="ARRIVE"></div>
+    <div class="cover-title">تقرير التدقيق التشغيلي</div>
+    <div class="cover-sub">لوحة متابعة الرقابة — ARRIVE AUDIT CONTROL TOWER</div>
+    ${demoBadge}
+    <table class="cover-meta"><tbody>
+      <tr><th>الفترة المحلَّلة</th><td class="n">${E(periodTxt)}</td></tr>
+      <tr><th>الإدارة</th><td>قسم التدقيق</td></tr>
+      <tr><th>تاريخ الإصدار</th><td class="n">${E(res.generatedAt || NA)}</td></tr>
+      <tr><th>أُعدّ بواسطة</th><td>${E(USER_NAME || NA)}</td></tr>
+      <tr><th>الفلاتر المطبقة</th><td>${E(res.filtersApplied || 'بدون فلاتر')}</td></tr>
+    </tbody></table>
+    <button class="btn no-print" onclick="printReport()"><i class="fa-solid fa-print"></i> طباعة / حفظ PDF</button>
   </div>`;
-
+  // ---- 2) الملخص التنفيذي
+  html += `<div class="card"><h2>الملخص التنفيذي</h2>
+    <div class="grid">
+      <div class="summary-tile"><div class="num">${fmtNum(c.grandTotal)}</div><div class="lbl">إجمالي السجلات خلال الفترة</div></div>
+      <div class="summary-tile tone-violation"><div class="num">${fmtNum(c.confirmedViolations)}</div><div class="lbl">مخالفات مؤكدة (من مسح الحالات)</div></div>
+      <div class="summary-tile tone-under-action"><div class="num">${fmtNum(c.overdueCount)}</div><div class="lbl">حالات متأخرة عن الهدف</div></div>
+      <div class="summary-tile tone-under-action"><div class="num">${fmtNum(c.openActionsTotal)}</div><div class="lbl">إجراءات لم تُغلق بعد</div></div>
+    </div>
+    <p style="margin-top:var(--space-4)">خلال الفترة <bdi>${E(periodTxt)}</bdi> بلغ إجمالي السجلات <b class="arrive-num">${fmtNum(c.grandTotal)}</b>، منها <b class="arrive-num">${fmtNum(c.confirmedViolations)}</b> مخالفة مؤكدة (من مسح الحالات) و<b class="arrive-num">${fmtNum(c.overdueCount)}</b> حالة متأخرة عن الهدف، ويوجد <b class="arrive-num">${fmtNum(c.openActionsTotal)}</b> إجراء لم يُغلق بعد.</p>
+  </div>`;
+  // ---- 3) النطاق والمنهجية
+  html += `<div class="card"><h2>النطاق والمنهجية</h2>
+    <ul class="plain">
+      <li>الفترة: <bdi>${E(periodTxt)}</bdi></li>
+      <li>الفلاتر المطبقة: ${E(res.filtersApplied || 'بدون فلاتر')}</li>
+      <li>عدد السجلات ضمن النطاق: <b class="arrive-num">${fmtNum(c.grandTotal)}</b></li>
+      <li>${isDemo ? 'مصدر البيانات: بيانات توضيحية في وضع التجربة — لا اتصال حقيقي بأي مصدر بيانات.' : 'طريقة الحساب: كل الأعداد والنسب هنا محسوبة من نفس بيانات Google Sheets الفعلية عبر Apps Script، بنفس منطق شاشة لوحة المتابعة — وليست أرقامًا ثابتة أو مُدخلة يدويًا.'}</li>
+    </ul></div>`;
   if (c.grandTotal === 0) {
-    html += `<div class="card msg info">لا توجد بيانات مطابقة لهذه الفترة/الفلاتر — جرّب توسيع نطاق التاريخ أو إزالة أحد الفلاتر.</div>`;
+    html += `<div class="card">${emptyState('لا توجد بيانات متاحة وفقًا للفلاتر المحددة — جرّب توسيع نطاق التاريخ أو إزالة أحد الفلاتر.')}</div>`;
   } else {
-    html += `<div class="card"><h3 style="color:var(--navy)">توزيع السجلات حسب نوع الرقابة</h3>
-      <table><tr><th>النوع</th><th>عدد السجلات</th></tr>
-      ${Object.values(c.byType).map(t => `<tr><td>${t.name}</td><td>${t.count}</td></tr>`).join('')}
-      </table></div>`;
-
-    const branches = Object.entries(c.byBranch).sort((a,b) => b[1]-a[1]);
-    html += `<div class="card"><h3 style="color:var(--navy)">توزيع السجلات حسب الفرع</h3>
-      <table><tr><th>الفرع</th><th>عدد السجلات</th></tr>
-      ${branches.length ? branches.map(([b,n]) => `<tr><td>${b}</td><td>${n}</td></tr>`).join('') : '<tr><td colspan="2">لا توجد بيانات فروع في هذه الفترة</td></tr>'}
-      </table></div>`;
-
-    html += `<div class="card"><h3 style="color:var(--navy)">الإجراءات التي لم تُغلق بعد (والمسؤول عن كل إجراء)</h3>
-      <div class="status-line">الإجمالي: ${c.openActionsTotal}${c.openActionsTotal>500?' (تُعرض أول 500 فقط)':''}</div>
-      <div class="table-wrap"><table><tr><th>النوع</th><th>رقم السجل</th><th>المسؤول</th><th>الحالة الحالية</th></tr>
-      ${c.openActions.length ? c.openActions.map(o => `<tr><td>${o.type}</td><td>${o.recordId}</td><td>${o.owner}</td><td>${o.status}</td></tr>`).join('') : '<tr><td colspan="4">لا توجد إجراءات مفتوحة حاليًا</td></tr>'}
-      </table></div></div>`;
-  }
-
-  if (res.previous) {
-    const p = res.previous;
-    function delta(cur, prev) {
-      const d = cur - prev;
-      const sign = d > 0 ? '+' : '';
-      const color = d > 0 ? 'var(--red)' : (d < 0 ? 'var(--green)' : 'var(--gray)');
-      return `<span style="color:${color};font-weight:700">${sign}${d}</span>`;
+    // ---- 4) التحليل
+    const types = Object.values(c.byType);
+    const tmax = Math.max.apply(null, types.map(t => t.count).concat([1]));
+    html += `<div class="card"><h2>التحليل</h2><h3>توزيع السجلات حسب نوع الرقابة</h3>
+      <div class="chart">${types.map(t => barRow(t.name, t.count, tmax, fmtNum(t.count), 'dark')).join('')}</div>`;
+    const branches = Object.entries(c.byBranch).sort((a, b) => b[1] - a[1]);
+    const bmax = Math.max.apply(null, branches.map(x => x[1]).concat([1]));
+    html += `<h3 style="margin-top:var(--space-5)">توزيع السجلات حسب الفرع</h3>
+      <div class="chart">${branches.length ? branches.map(([b, n]) => barRow(b, n, bmax, fmtNum(n), '')).join('') : emptyState('لا توجد بيانات فروع في هذه الفترة')}</div></div>`;
+    // ---- 5) المقارنة بالفترة السابقة
+    if (res.previous) {
+      const p = res.previous;
+      const row = (name, cur, prev) => {
+        const d = cur - prev;
+        const dTxt = d > 0 ? '+' + d + ' ▲' : (d < 0 ? '−' + Math.abs(d) + ' ▼' : '0 ●');
+        const pct = prev !== 0 ? ((d / prev) * 100) : null;
+        const pTxt = pct === null ? 'لا ينطبق (السابق = 0)' : (pct > 0 ? '+' : (pct < 0 ? '−' : '')) + Math.abs(pct).toFixed(1) + '%';
+        const meaning = d > 0 ? 'زيادة عن الفترة السابقة' : (d < 0 ? 'انخفاض عن الفترة السابقة' : 'بلا تغيير');
+        return `<tr><td>${name}</td><td class="n">${fmtNum(cur)}</td><td class="n">${fmtNum(prev)}</td><td class="n">${dTxt}</td><td class="n">${pTxt}</td><td>${meaning}</td></tr>`;
+      };
+      html += `<div class="card"><h2>المقارنة بالفترة السابقة المكافئة</h2>
+        <div class="status-line">الفترة السابقة: <bdi>${E(res.previousPeriod.dateFrom)} → ${E(res.previousPeriod.dateTo)}</bdi></div>
+        <div class="table-wrap"><table><thead><tr><th>المؤشر</th><th>الفترة الحالية</th><th>الفترة السابقة</th><th>الفرق</th><th>نسبة التغير</th><th>الدلالة</th></tr></thead><tbody>
+        ${row('إجمالي السجلات', c.grandTotal, p.grandTotal)}${row('مخالفات مؤكدة', c.confirmedViolations, p.confirmedViolations)}${row('حالات متأخرة', c.overdueCount, p.overdueCount)}${row('إجراءات مفتوحة', c.openActionsTotal, p.openActionsTotal)}
+        </tbody></table></div>
+        <p class="filters-note">الفرق = الحالي − السابق، ويُعرض بإشارة وسهم وليس باللون وحده. الدلالة وصف حسابي للاتجاه فقط، ولا تُفسَّر أسبابه من هذه البيانات.</p></div>`;
     }
-    html += `<div class="card"><h3 style="color:var(--navy)">مقارنة بالفترة السابقة المكافئة (${res.previousPeriod.dateFrom} → ${res.previousPeriod.dateTo})</h3>
-      <table>
-        <tr><th>المؤشر</th><th>الفترة الحالية</th><th>الفترة السابقة</th><th>الفرق</th></tr>
-        <tr><td>إجمالي السجلات</td><td>${c.grandTotal}</td><td>${p.grandTotal}</td><td>${delta(c.grandTotal, p.grandTotal)}</td></tr>
-        <tr><td>مخالفات مؤكدة</td><td>${c.confirmedViolations}</td><td>${p.confirmedViolations}</td><td>${delta(c.confirmedViolations, p.confirmedViolations)}</td></tr>
-        <tr><td>حالات متأخرة</td><td>${c.overdueCount}</td><td>${p.overdueCount}</td><td>${delta(c.overdueCount, p.overdueCount)}</td></tr>
-        <tr><td>إجراءات مفتوحة</td><td>${c.openActionsTotal}</td><td>${p.openActionsTotal}</td><td>${delta(c.openActionsTotal, p.openActionsTotal)}</td></tr>
-      </table>
-      <p class="filters-note">قيمة موجبة (أحمر) تعني زيادة عن الفترة السابقة؛ قيمة سالبة (أخضر) تعني انخفاضًا. "الفرق" = الحالي − السابق.</p>
-    </div>`;
+    // ---- 6) الإجراءات المفتوحة
+    html += `<div class="card"><h2>الإجراءات التي لم تُغلق بعد</h2>
+      <div class="status-line">الإجمالي: <b class="arrive-num">${fmtNum(c.openActionsTotal)}</b>${c.openActionsTotal > 500 ? ' (تُعرض أول 500 فقط)' : ''}</div>
+      <div class="table-wrap"><table><thead><tr><th>النوع</th><th>رقم السجل</th><th>المسؤول</th><th>الحالة الحالية</th></tr></thead><tbody>
+      ${c.openActions.length ? c.openActions.map(o => `<tr><td>${E(o.type)}</td><td class="n">${E(o.recordId)}</td><td>${o.owner ? E(o.owner) : NA}</td><td>${statusBadge(o.status)}</td></tr>`).join('') : `<tr><td colspan="4">${emptyState('لا توجد إجراءات مفتوحة حاليًا')}</td></tr>`}
+      </tbody></table></div>
+      <p class="filters-note">لا يتضمن المصدر موعد استحقاق لكل إجراء، لذلك لا يُعرض عمود تاريخ استحقاق (${NA}).</p></div>`;
+    // ---- 7) الخاتمة (وقائع فقط)
+    const noOwner = c.openActions.filter(o => !o.owner).length;
+    html += `<div class="card"><h2>الخاتمة</h2>
+      <ul class="plain">
+        <li>إجمالي السجلات خلال الفترة: <b class="arrive-num">${fmtNum(c.grandTotal)}</b>.</li>
+        <li>مخالفات مؤكدة: <b class="arrive-num">${fmtNum(c.confirmedViolations)}</b> — حالات متأخرة عن الهدف: <b class="arrive-num">${fmtNum(c.overdueCount)}</b>.</li>
+        <li>إجراءات لم تُغلق بعد: <b class="arrive-num">${fmtNum(c.openActionsTotal)}</b>، منها <b class="arrive-num">${fmtNum(noOwner)}</b> بلا مسؤول محدد${c.openActionsTotal > 500 ? ' (محسوبة على أول 500 إجراء المعروضة فقط)' : ''}.</li>
+      </ul>
+      <p class="filters-note">لا يتضمن المصدر حقولًا للنتائج التفصيلية أو الأسباب الجذرية أو التوصيات أو مواعيد الاستحقاق، لذلك لم تُدرج في هذا التقرير ولا يُستنتج منها شيء.</p></div>`;
   }
-
-  html += `<div class="card filters-note">📐 طريقة الحساب: كل الأعداد والنسب هنا محسوبة من نفس بيانات Google Sheets الفعلية عبر Apps Script، بنفس منطق شاشة Dashboard — وليست أرقامًا ثابتة أو مُدخلة يدويًا.</div>`;
-  document.getElementById('reportsBody').innerHTML = html;
+  body.innerHTML = html;
 }
+function printReport() { window.print(); }
 
 function loadSettingsView() {
   let html = '<div class="grid">';
   Object.entries(BOOT.lists).forEach(([k, vals]) => {
     html += `<div><strong>${k}</strong><ul>${vals.map(v=>`<li>${v}</li>`).join('')}</ul></div>`;
   });
-  html += '</div><h3 style="color:var(--navy)">الأهداف</h3><ul>';
+  html += '</div><h3>الأهداف</h3><ul>';
   Object.entries(BOOT.targets).forEach(([k,v]) => html += `<li>${k}: ${v}</li>`);
   html += '</ul>';
   document.getElementById('settingsView').innerHTML = html;
@@ -1313,10 +1854,10 @@ function goSettingsTab(name) {
 async function testConnection() {
   const box = document.getElementById('connStatusBox');
   box.className = 'msg info'; box.textContent = 'جارٍ الاختبار...';
-  if (!API_URL) { box.className = 'msg err'; box.textContent = '❌ لم يتم ضبط الرابط بعد.'; return; }
+  if (!API_URL) { box.className = 'msg err'; box.textContent = 'لم يتم ضبط الرابط بعد.'; return; }
   const r = await api('bootstrap');
-  if (r.ok) { box.className = 'msg ok'; box.textContent = '✅ متصل — الخادم يستجيب بشكل صحيح.'; }
-  else { box.className = 'msg err'; box.textContent = '❌ غير متصل / الرابط غير صحيح: ' + r.error; }
+  if (r.ok) { box.className = 'msg ok'; box.textContent = 'متصل — الخادم يستجيب بشكل صحيح.'; }
+  else { box.className = 'msg err'; box.textContent = 'غير متصل / الرابط غير صحيح: ' + r.error; }
 }
 
 /* ---------------- إدارة الفروع ---------------- */
@@ -1330,10 +1871,10 @@ async function loadBranches() {
     <tr>
       <td>${escapeHtml(b.id || '—')}</td>
       <td>${escapeHtml(b.name)}</td>
-      <td>${b.active ? '<span style="color:var(--green)">نشط</span>' : '<span style="color:var(--red)">معطل</span>'}</td>
+      <td>${b.active ? '<span class="sbadge success"><i class="fa-solid fa-circle-check"></i> نشط</span>' : '<span class="sbadge closed"><i class="fa-solid fa-ban"></i> معطل</span>'}</td>
       <td>
-        <button class="btn small secondary" data-act="rename" data-id="${escapeHtml(b.id)}" data-name="${escapeHtml(b.name)}">✏️ إعادة تسمية</button>
-        <button class="btn small secondary" data-act="toggle" data-id="${escapeHtml(b.id)}" data-activate="${!b.active}">${b.active ? '⏸️ تعطيل' : '▶️ تفعيل'}</button>
+        <button class="btn small secondary" data-act="rename" data-id="${escapeHtml(b.id)}" data-name="${escapeHtml(b.name)}">إعادة تسمية</button>
+        <button class="btn small secondary" data-act="toggle" data-id="${escapeHtml(b.id)}" data-activate="${!b.active}">${b.active ? 'تعطيل' : 'تفعيل'}</button>
       </td>
     </tr>`).join('');
   tbody.querySelectorAll('button[data-act="rename"]').forEach(btn =>
@@ -1380,16 +1921,16 @@ async function loadEmployees() {
     // نعرض تحذيرًا صريحًا هنا بدل شرطة عامة "—" كي يلاحظها المسؤول ويصحّح التكليف.
     const noBranchesAssigned = e.branches !== 'ALL' && (!e.branches || !e.branches.length);
     const branchesLabel = e.branches === 'ALL' ? 'كل الفروع'
-      : noBranchesAssigned ? '⚠️ لا فروع مخصَّصة — يحتاج مراجعة إدارية'
+      : noBranchesAssigned ? 'لا فروع مخصَّصة — يحتاج مراجعة إدارية'
       : (e.branches || []).map(id => (BRANCHES_CACHE.find(b => b.id === id) || {}).name || id).join('، ');
     return `<tr>
       <td>${escapeHtml(e.id)}</td><td>${escapeHtml(e.fullName)}</td><td>${escapeHtml(e.username)}</td><td>${escapeHtml(e.role)}</td>
       <td${noBranchesAssigned ? ' style="color:var(--red)"' : ''}>${escapeHtml(branchesLabel)}</td>
-      <td>${e.status === 'نشط' ? '<span style="color:var(--green)">نشط</span>' : '<span style="color:var(--red)">معطل</span>'}</td>
+      <td>${e.status === 'نشط' ? '<span class="sbadge success"><i class="fa-solid fa-circle-check"></i> نشط</span>' : '<span class="sbadge closed"><i class="fa-solid fa-ban"></i> معطل</span>'}</td>
       <td>${escapeHtml(e.lastLogin || '—')}</td>
       <td>
-        <button class="btn small secondary" data-act="edit" data-id="${escapeHtml(e.id)}">✏️ تعديل</button>
-        <button class="btn small secondary" data-act="toggle" data-id="${escapeHtml(e.id)}" data-activate="${e.status !== 'نشط'}">${e.status === 'نشط' ? '⏸️ تعطيل' : '▶️ تفعيل'}</button>
+        <button class="btn small secondary" data-act="edit" data-id="${escapeHtml(e.id)}">تعديل</button>
+        <button class="btn small secondary" data-act="toggle" data-id="${escapeHtml(e.id)}" data-activate="${e.status !== 'نشط'}">${e.status === 'نشط' ? 'تعطيل' : 'تفعيل'}</button>
       </td>
     </tr>`;
   }).join('');
@@ -1508,12 +2049,14 @@ async function loadAuditLog() {
 
 // ---- boot ----
 if (API_URL && USER_NAME) {
-  document.getElementById('userLabel').textContent = '👤 ' + USER_NAME;
+  document.getElementById('userLabel').textContent = USER_NAME;
   document.getElementById('homeUser').textContent = USER_NAME;
   init(); // init() itself decides: app shell directly, or the login screen first, per boot.authEnabled
 } else {
   showConfig();
 }
+
+initFilterPanels();
 
 /* =====================================================================================
  * ARRIVE AUDIT CONTROL TOWER — LOCAL PREVIEW / MOCK DATA LAYER

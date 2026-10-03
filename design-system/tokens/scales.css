@@ -1,0 +1,74 @@
+/* ARRIVE V1.1 — structural scales. Values reuse the existing palette/type; nothing here is a new brand decision. */
+:root{
+/* Breakpoints (min-width). Use in media queries as literals; tokens document the contract. */
+--bp-sm:640px; /* @kind other */
+--bp-md:900px; /* @kind other */
+--bp-lg:1200px; /* @kind other */
+--bp-xl:1440px; /* @kind other */
+/* Chart series — brand first, neutrals after. Status colours only when the series IS a status. */
+--chart-1:var(--arrive-blue);
+--chart-2:var(--arrive-teal);
+--chart-3:var(--arrive-navy);
+--chart-4:var(--gray-400);
+--chart-5:var(--gray-300);
+--chart-highlight:var(--arrive-teal);
+--chart-target:var(--arrive-teal-600);
+--chart-grid:var(--gray-200);
+--chart-axis:var(--border-strong);
+--chart-label:var(--text-secondary);
+/* Slide scale (1280×720 canvas) */
+--slide-fs-display:60px;
+--slide-fs-title:44px;
+--slide-fs-kpi:64px;
+--slide-fs-lead:34px;
+--slide-fs-body:26px;
+--slide-fs-table:22px;
+--slide-fs-subtitle:22px;
+--slide-fs-caption:18px;
+--slide-fs-footer:15px;
+--slide-pad-x:56px;
+--slide-footer-h:52px;
+/* Print scale (Word / PDF, from Official V2.0) */
+--print-fs-title:30pt; /* @kind font */
+--print-fs-section:18pt; /* @kind font */
+--print-fs-subsection:14pt; /* @kind font */
+--print-fs-body:11pt; /* @kind font */
+--print-fs-table:10pt; /* @kind font */
+--print-fs-caption:9pt; /* @kind font */
+--print-fs-footer:8pt; /* @kind font */
+--print-margin-x:56px;
+--print-footer-h:46px;
+/* Border widths */
+--bw-hairline:1px;
+--bw-strong:2px;
+--bw-focus:3px;
+--bw-accent:4px;
+/* Icon sizes */
+--icon-xs:12px;
+--icon-sm:14px;
+--icon-md:16px;
+--icon-lg:20px;
+--icon-xl:24px;
+--icon-disc:52px;
+/* Z-index */
+--z-base:0; /* @kind other */
+--z-sticky:5; /* @kind other */
+--z-header:10; /* @kind other */
+--z-dropdown:20; /* @kind other */
+--z-drawer:30; /* @kind other */
+--z-modal:40; /* @kind other */
+--z-toast:50; /* @kind other */
+/* Number & date formatting rules — implemented by ArriveFormat (components/data/Num.jsx) */
+--fmt-digits:"latin"; /* @kind other */
+--fmt-thousands:","; /* @kind other */
+--fmt-decimal:"."; /* @kind other */
+--fmt-decimals-percent:1; /* @kind other */
+--fmt-decimals-currency:2; /* @kind other */
+--fmt-currency-symbol:"ج.م"; /* @kind other */
+--fmt-sign-positive:"+"; /* @kind other */
+--fmt-minus-delta:"\2212"; /* @kind other */
+--fmt-minus-amount:"-"; /* @kind other */
+--fmt-unit-points:"نقطة"; /* @kind other */
+--fmt-date-data:"yyyy-mm-dd"; /* @kind other */
+--fmt-date-prose:"d MMMM yyyy"; /* @kind other */
+}
