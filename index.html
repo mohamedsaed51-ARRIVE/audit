@@ -706,7 +706,9 @@ a:hover{color:var(--arrive-blue-700);text-decoration:underline}
 </div>
 
 <script>
-let API_URL = localStorage.getItem('arrive_api_url') || '';
+// الرابط ثابت افتراضيًا (TEST COPY) — لا حاجة لإدخاله يدويًا كل مرة. لو حُفظ رابط مختلف يدويًا من قبل
+// عبر شاشة الإعدادات (localStorage)، فهو يبقى الأولوية (مفيد لو احتجت تحويل الاتصال لشيت آخر لاحقًا).
+let API_URL = localStorage.getItem('arrive_api_url') || 'https://script.google.com/macros/s/AKfycbzCwupuJPZXrSra_X6crD4z0WSPOAUVzBU9XPvniZId4hYu7Myink_TTssZhleuyqoO/exec';
 let USER_NAME = localStorage.getItem('arrive_user') || '';
 let BOOT = null;
 
