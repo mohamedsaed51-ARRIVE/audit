@@ -15,7 +15,9 @@
     "test:browser": "node tests/test_dashboard.js",
     "test:browser-admin": "node tests/test_admin_ui.js",
     "test:xss": "node tests/test_xss.js",
-    "test:all": "npm run test:harness && npm run test:parity && npm run test:admin && npm run test:security && npm run test:migration && npm run test:branch-scope && npm run test:session-ttl && npm run test:branch-empty-fix && npm run test:browser && npm run test:browser-admin && npm run test:xss"
+    "test:default-url": "node tests/test_default_api_url.js",
+    "test:demo-batch": "node tests/test_demo_morning_batch.js",
+    "test:all": "npm run test:harness && npm run test:parity && npm run test:admin && npm run test:security && npm run test:migration && npm run test:branch-scope && npm run test:session-ttl && npm run test:branch-empty-fix && npm run test:browser && npm run test:browser-admin && npm run test:xss && npm run test:default-url && npm run test:demo-batch"
   },
   "devDependencies": {
     "playwright": "^1.56.1"
