@@ -23,6 +23,10 @@ async function main() {
   const sandbox = buildSandbox(codeGsSource, mockSS);
   for (const row of mockSS._sheets["الإعدادات"].rows) if (row[0] === "auth_enabled") row[1] = "1";
 
+  // لا يخرج أي طلب من الجهاز: أي شيء ليس file:// (الخطوط/الأيقونات الخارجية) يُحجَب. يُسجَّل هذا المسار قبل مسار
+  // **/macros/** لأن Playwright يعطي الأولوية للمسار الأحدث تسجيلًا، فيبقى مسار Apps Script الوهمي هو الأعلى.
+  await page.route(url => !url.href.startsWith('file:'), route => route.abort());
+
   await page.route('**/macros/**', async (route) => {
     const req = route.request();
     if (req.method() === 'GET') {
@@ -64,7 +68,7 @@ async function main() {
   await page.click("button[data-stab='branches']");
   await page.waitForTimeout(200);
   await page.fill('#newBranchName', payload);
-  await page.click('#tab-settings >> text=➕ إضافة فرع');
+  await page.click('#tab-settings >> text=إضافة فرع');
   await page.waitForTimeout(400);
   const fired1 = await page.evaluate(() => window.__xssFired);
   check('[XSS] اسم فرع يحتوي <img onerror>/<svg onload> لا يُنفَّذ عند إضافته وعرضه في الجدول', fired1 === false, fired1);
@@ -84,7 +88,7 @@ async function main() {
   await page.selectOption('#newEmpRole', 'Audit Viewer');
   // Audit Viewer لم يعد يملك canBeAssignedAllBranches (قرار إداري) — لا خيار "كل الفروع" لهذا الدور.
   await page.check('#newEmpBranchesBox input[type=checkbox] >> nth=0');
-  await page.click('#tab-settings >> text=➕ إضافة موظف');
+  await page.click('#tab-settings >> text=إضافة موظف');
   await page.waitForTimeout(400);
   const fired2 = await page.evaluate(() => window.__xssFired);
   check('[XSS] اسم موظف يحتوي <img onerror>/<svg onload> لا يُنفَّذ عند إضافته وعرضه في جدول الموظفين', fired2 === false, fired2);

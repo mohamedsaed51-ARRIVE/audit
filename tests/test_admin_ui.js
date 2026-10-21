@@ -25,6 +25,10 @@ async function main() {
   // فعِّل نظام تسجيل الدخول قبل فتح الصفحة — تمامًا كما يفعله مسؤول النظام يدويًا في تاب "الإعدادات"
   for (const row of mockSS._sheets["الإعدادات"].rows) if (row[0] === "auth_enabled") row[1] = "1";
 
+  // لا يخرج أي طلب من الجهاز: أي شيء ليس file:// (الخطوط/الأيقونات الخارجية) يُحجَب. يُسجَّل هذا المسار قبل مسار
+  // **/macros/** لأن Playwright يعطي الأولوية للمسار الأحدث تسجيلًا، فيبقى مسار Apps Script الوهمي هو الأعلى.
+  await page.route(url => !url.href.startsWith('file:'), route => route.abort());
+
   await page.route('**/macros/**', async (route) => {
     const req = route.request();
     if (req.method() === 'GET') {
@@ -82,18 +86,18 @@ async function main() {
   await page.click("button[data-stab='branches']");
   await page.waitForTimeout(200);
   await page.fill('#newBranchName', 'الأقصر');
-  await page.click('#tab-settings >> text=➕ إضافة فرع');
+  await page.click('#tab-settings >> text=إضافة فرع');
   await page.waitForTimeout(300);
   let branchRows = await page.$$eval('#branchesTable tbody tr', rows => rows.map(r => r.textContent));
   check('[Branches UI] الفرع الجديد يظهر في الجدول بعد الإضافة', branchRows.some(t => t.includes('الأقصر')), branchRows);
 
   await page.fill('#newBranchName', 'الأقصر');
-  await page.click('#tab-settings >> text=➕ إضافة فرع');
+  await page.click('#tab-settings >> text=إضافة فرع');
   await page.waitForTimeout(300);
   const branchMsg = await page.textContent('#branchMsg');
   check('[Branches UI] منع تكرار اسم الفرع من الواجهة أيضًا', branchMsg.includes('بالفعل'), branchMsg);
 
-  await page.click('#branchesTable tbody tr:has-text("الأقصر") >> text=⏸️ تعطيل');
+  await page.click('#branchesTable tbody tr:has-text("الأقصر") >> text=تعطيل');
   await page.waitForTimeout(300);
   branchRows = await page.$$eval('#branchesTable tbody tr', rows => rows.map(r => r.textContent));
   check('[Branches UI] تعطيل فرع من الواجهة يُحدِّث حالته إلى "معطل" في الجدول', branchRows.some(t => t.includes('الأقصر') && t.includes('معطل')), branchRows);
@@ -108,7 +112,7 @@ async function main() {
   // Audit Viewer لم يعد يملك canBeAssignedAllBranches (قرار إداري: لا سيناريو فعلي يبرر رؤية دور
   // "عرض فقط" لكل الفروع معًا) — فلا يظهر خيار "كل الفروع" إطلاقًا لهذا الدور؛ يلزم تحديد فرع محدد.
   await page.check('#newEmpBranchesBox input[type=checkbox] >> nth=0');
-  await page.click('#tab-settings >> text=➕ إضافة موظف');
+  await page.click('#tab-settings >> text=إضافة موظف');
   await page.waitForTimeout(300);
   let empRows = await page.$$eval('#employeesTable tbody tr', rows => rows.map(r => r.textContent));
   check('[Employees UI] الموظف الجديد يظهر في الجدول بعد الإضافة', empRows.some(t => t.includes('tempuser1')), empRows);
@@ -117,12 +121,12 @@ async function main() {
   await page.fill('#newEmpFullName', 'شخص آخر'); await page.fill('#newEmpPassword', 'Passw0rd!');
   await page.selectOption('#newEmpRole', 'Audit Viewer');
   await page.check('#newEmpBranchesBox input[type=checkbox] >> nth=0'); // النموذج يُفرَّغ بعد كل إضافة ناجحة
-  await page.click('#tab-settings >> text=➕ إضافة موظف');
+  await page.click('#tab-settings >> text=إضافة موظف');
   await page.waitForTimeout(300);
   const empMsg = await page.textContent('#empMsg');
   check('[Employees UI] منع تكرار اسم المستخدم من الواجهة أيضًا', empMsg.includes('مستخدَم بالفعل'), empMsg);
 
-  await page.click('#employeesTable tbody tr:has-text("tempuser1") >> text=⏸️ تعطيل');
+  await page.click('#employeesTable tbody tr:has-text("tempuser1") >> text=تعطيل');
   await page.waitForTimeout(300);
   empRows = await page.$$eval('#employeesTable tbody tr', rows => rows.map(r => r.textContent));
   check('[Employees UI] تعطيل موظف من الواجهة يُحدِّث حالته إلى "معطل"', empRows.some(t => t.includes('tempuser1') && t.includes('معطل')), empRows);
